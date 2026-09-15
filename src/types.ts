@@ -157,7 +157,8 @@ export interface HandwritingStyle {
   fontName: string;
   fontSize: number; // in px at base scale (e.g., 26)
   lineSpacing: number; // line-height multiplier e.g. 1.85
-  letterSpacing: number; // in px e.g. 0.3
+  letterSpacing: number; // in px e.g. 0.0
+  wordSpacing?: number; // word gap multiplier e.g. 1.0 (0.6x to 1.8x)
   inkColor: string;
   inkOpacity: number;
   paperType: PaperType;

@@ -69,11 +69,13 @@ export function measureTextLineWidth(
   activeProfile?: PersonalHandwritingProfile | null
 ): number {
   const fontSpec = `${style.fontSize}px ${style.fontFamily}`;
-  const baseSpacePx = style.fontSize * 0.3;
+  const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
+  const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
 
   if (style.usePersonalHandwriting && activeProfile && activeProfile.glyphs) {
     let totalW = 0;
     const cellHeightPx = style.fontSize * 1.30;
+    const userLetterSpacing = style.letterSpacing ?? 0;
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
@@ -83,6 +85,8 @@ export function measureTextLineWidth(
       }
 
       const glyphList = activeProfile.glyphs[char];
+      const nextChar = i < text.length - 1 && text[i + 1] !== ' ' ? text[i + 1] : undefined;
+
       if (glyphList && glyphList.length > 0) {
         const glyph = glyphList[0];
         let relHeight = glyph.heightRatioInCell;
@@ -96,9 +100,19 @@ export function measureTextLineWidth(
         }
         const targetHeight = Math.max(4, cellHeightPx * relHeight);
         const targetWidth = Math.max(3, targetHeight * glyph.aspectRatio);
-        totalW += targetWidth + 0.5;
+
+        let kerningPx = 0;
+        if (nextChar) {
+          const isNextPunctuation = /[.,!?:;'"\-_()/@#+]/.test(nextChar);
+          const isCurrentPunctuation = /[.,!?:;'"\-_()/@#+]/.test(char);
+          if (isNextPunctuation) kerningPx = -Math.round(style.fontSize * 0.14);
+          else if (isCurrentPunctuation) kerningPx = -Math.round(style.fontSize * 0.05);
+          else kerningPx = -Math.round(style.fontSize * 0.12);
+        }
+
+        totalW += Math.max(1, targetWidth + kerningPx + userLetterSpacing);
       } else {
-        totalW += getTextWidth(char, fontSpec);
+        totalW += getTextWidth(char, fontSpec) + userLetterSpacing;
       }
     }
     return totalW;

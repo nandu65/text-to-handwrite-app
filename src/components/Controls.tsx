@@ -238,6 +238,42 @@ export const Controls: React.FC<ControlsProps> = ({
             className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
           />
         </div>
+
+        {/* 6. Letter Tightness / Spacing */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-400">Letter Spacing</span>
+            <span className="text-indigo-400 font-mono">
+              {(style.letterSpacing ?? 0) > 0 ? `+${style.letterSpacing}` : (style.letterSpacing ?? 0)}px
+            </span>
+          </div>
+          <input
+            type="range"
+            min={-3}
+            max={3}
+            step={0.5}
+            value={style.letterSpacing ?? 0}
+            onChange={(e) => onChange({ letterSpacing: Number(e.target.value) })}
+            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+          />
+        </div>
+
+        {/* 7. Word Spacing */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-400">Word Gap</span>
+            <span className="text-indigo-400 font-mono">{(style.wordSpacing ?? 1.0).toFixed(1)}×</span>
+          </div>
+          <input
+            type="range"
+            min={0.6}
+            max={1.8}
+            step={0.1}
+            value={style.wordSpacing ?? 1.0}
+            onChange={(e) => onChange({ wordSpacing: Number(e.target.value) })}
+            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+          />
+        </div>
       </div>
 
       {/* 6. Variation Intensity Slider */}

@@ -76,6 +76,7 @@ export function computeCharTransform(
   style: HandwritingStyle,
   charOccurrencesInLine: number,
   prevChar?: string,
+  nextChar?: string,
   activeProfile?: PersonalHandwritingProfile | null
 ): { css: React.CSSProperties; glyph?: ExtractedGlyph; isPersonalGlyph: boolean; glyphWidthPx?: number; glyphHeightPx?: number } {
   const intensity = style.variationIntensity ?? 1.0;
@@ -137,6 +138,26 @@ export function computeCharTransform(
     return { targetHeight, targetWidth, glyphBaselineShift };
   };
 
+  // Natural handwriting kerning compensation between letters
+  let baseKerning = 0;
+  if (personalGlyph) {
+    const isNextPunctuation = nextChar ? /[.,!?:;'"\-_()/@#+]/.test(nextChar) : false;
+    const isCurrentPunctuation = /[.,!?:;'"\-_()/@#+]/.test(char);
+
+    if (!nextChar) {
+      baseKerning = 0;
+    } else if (isNextPunctuation) {
+      baseKerning = -Math.round(style.fontSize * 0.14);
+    } else if (isCurrentPunctuation) {
+      baseKerning = -Math.round(style.fontSize * 0.05);
+    } else {
+      // Natural cursive letter-to-letter connection
+      baseKerning = -Math.round(style.fontSize * 0.12);
+    }
+  }
+
+  const userLetterSpacing = style.letterSpacing ?? 0;
+
   if (!style.subtleVariation) {
     if (personalGlyph) {
       const { targetHeight, targetWidth, glyphBaselineShift } = getProportionalGlyphMetrics(personalGlyph, 1.0, 1.0);
@@ -146,6 +167,7 @@ export function computeCharTransform(
           position: 'relative',
           verticalAlign: 'baseline',
           transform: `translate(0px, ${glyphBaselineShift.toFixed(2)}px)`,
+          marginRight: `${(baseKerning + userLetterSpacing).toFixed(2)}px`,
         },
         glyph: personalGlyph,
         isPersonalGlyph: true,
@@ -161,6 +183,7 @@ export function computeCharTransform(
         fontFamily: selectedVariant.fontFamily,
         fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
         color: style.inkColor,
+        marginRight: `${userLetterSpacing.toFixed(2)}px`,
       },
       isPersonalGlyph: false,
     };
@@ -204,7 +227,8 @@ export function computeCharTransform(
   const inkOpacity = Math.max(0.85, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
 
   // 8. Individual letter spacing variance
-  const letterSpacingDelta = (rand() * 2 - 1) * 0.3 * intensity;
+  const letterSpacingDelta = (rand() * 2 - 1) * 0.25 * intensity;
+  const totalMarginRight = baseKerning + userLetterSpacing + letterSpacingDelta;
 
   if (personalGlyph) {
     const { targetHeight, targetWidth, glyphBaselineShift } = getProportionalGlyphMetrics(personalGlyph, scaleX, scaleY);
@@ -218,7 +242,7 @@ export function computeCharTransform(
         transform: `translate(${dx.toFixed(2)}px, ${totalDy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg)`,
         transformOrigin: '50% 80%',
         opacity: inkOpacity,
-        marginRight: `${letterSpacingDelta.toFixed(2)}px`,
+        marginRight: `${totalMarginRight.toFixed(2)}px`,
       },
       glyph: personalGlyph,
       isPersonalGlyph: true,
@@ -237,8 +261,8 @@ export function computeCharTransform(
       transformOrigin: '50% 80%',
       fontWeight: weight,
       opacity: inkOpacity,
-      marginRight: `${letterSpacingDelta.toFixed(2)}px`,
-      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1, "ss01" 1',
+      marginRight: `${totalMarginRight.toFixed(2)}px`,
+      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
       WebkitFontSmoothing: 'antialiased',
     },
     isPersonalGlyph: false,
@@ -281,17 +305,19 @@ export function processHandwrittenLine(
     const wordRand = mulberry32(wordHash);
 
     // Natural word space width
-    const baseSpacePx = style.fontSize * 0.3;
+    const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
+    const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
     const spaceVarPx = style.wordSpacingVariation && style.subtleVariation
-      ? (wordRand() * 2 - 1) * (style.fontSize * 0.07) * intensity
+      ? (wordRand() * 2 - 1) * (style.fontSize * 0.05) * intensity
       : 0;
-    const spaceWidthPx = Math.max(5, baseSpacePx + spaceVarPx);
+    const spaceWidthPx = Math.max(4, Math.round(baseSpacePx + spaceVarPx));
 
     const chars: CharRenderProps[] = [];
     let prevChar = '';
 
     for (let cIdx = 0; cIdx < word.length; cIdx++) {
       const char = word[cIdx];
+      const nextChar = cIdx < word.length - 1 ? word[cIdx + 1] : undefined;
       const charLower = char.toLowerCase();
       const occurrenceCount = charOccurrences.get(charLower) || 0;
       charOccurrences.set(charLower, occurrenceCount + 1);
@@ -305,6 +331,7 @@ export function processHandwrittenLine(
         style,
         occurrenceCount,
         prevChar,
+        nextChar,
         activeProfile
       );
 
