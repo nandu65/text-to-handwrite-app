@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Sparkles,
   X,
@@ -22,6 +22,7 @@ import {
 } from '../utils/templateGenerator';
 import {
   extractGlyphsFromImage,
+  renderLivePreprocessPreview,
   PreprocessOptions,
   ExtractionResult,
 } from '../utils/glyphExtractor';
@@ -48,18 +49,22 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
 
   // Preprocessing options
   const [preprocessOptions, setPreprocessOptions] = useState<PreprocessOptions>({
-    threshold: 190,
+    threshold: 185,
     contrast: 1.15,
     brightness: 0,
     invert: false,
   });
 
+  const [viewMode, setViewMode] = useState<'processed' | 'original'>('processed');
+  const [liveDetectedCount, setLiveDetectedCount] = useState<number>(0);
+
   // Extraction results
   const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(null);
   const [profileName, setProfileName] = useState<string>('My Personal Handwriting');
-  const [testSentence, setTestSentence] = useState<string>('Quick brown fox jumps over 123');
+  const [testSentence, setTestSentence] = useState<string>('The quick brown fox jumps over 123');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const liveCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (isOpen && !imageSource) {
@@ -69,6 +74,27 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
       setImageFileName('sample_handwriting_template.png');
     }
   }, [isOpen]);
+
+  // Live Canvas Preview updater in Step 2
+  const updateLivePreview = useCallback(async () => {
+    if (!imageSource || !liveCanvasRef.current || currentStep !== 'preprocess') return;
+
+    try {
+      const { detectedCount } = await renderLivePreprocessPreview(
+        imageSource,
+        liveCanvasRef.current,
+        preprocessOptions,
+        true
+      );
+      setLiveDetectedCount(detectedCount);
+    } catch (err) {
+      console.error('Failed to render live preview:', err);
+    }
+  }, [imageSource, currentStep, preprocessOptions]);
+
+  useEffect(() => {
+    updateLivePreview();
+  }, [updateLivePreview]);
 
   if (!isOpen) return null;
 
@@ -118,7 +144,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
       setExtractionResult(result);
       if (result.totalExtracted === 0) {
         setErrorMessage(
-          'No handwriting was detected in the template boxes. Please ensure the sample matches the grid template and increase threshold.'
+          'No handwriting detected in the template boxes. Please adjust the threshold slider or upload a clearer scan.'
         );
       } else {
         setCurrentStep('preview');
@@ -299,7 +325,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                       onClick={() => setCurrentStep('preprocess')}
                       className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
                     >
-                      <span>Proceed with this image</span>
+                      <span>Proceed to Process Ink</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -311,7 +337,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
             </div>
           )}
 
-          {/* STEP 2: PREPROCESSING & CONTRAST CLEANUP */}
+          {/* STEP 2: REAL-TIME PREPROCESSING & CONTRAST CLEANUP */}
           {currentStep === 'preprocess' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -323,7 +349,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                   </div>
 
                   <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Adjust the sliders below so dark ink lines stand out crisply and the paper background turns pure white.
+                    Adjust the sliders below in real time so dark ink lines stand out crisply and the paper background turns pure white.
                   </p>
 
                   <div className="space-y-1.5">
@@ -333,7 +359,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                     </div>
                     <input
                       type="range"
-                      min={100}
+                      min={60}
                       max={240}
                       step={2}
                       value={preprocessOptions.threshold}
@@ -342,6 +368,11 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                       }
                       className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
                     />
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                      <span>Light Ink (60)</span>
+                      <span>Balanced (185)</span>
+                      <span>Dark/Heavy (240)</span>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -352,7 +383,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                     <input
                       type="range"
                       min={0.8}
-                      max={2.0}
+                      max={2.5}
                       step={0.05}
                       value={preprocessOptions.contrast}
                       onChange={(e) =>
@@ -362,11 +393,18 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                     />
                   </div>
 
+                  <div className="p-3 bg-slate-900/90 rounded-lg border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+                    <span>Recognized In Safe Zones:</span>
+                    <span className="text-emerald-400 font-bold font-mono">
+                      {liveDetectedCount} / 91 characters
+                    </span>
+                  </div>
+
                   <div className="pt-2">
                     <button
                       onClick={handleProcessImage}
                       disabled={isProcessing}
-                      className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition disabled:opacity-50"
+                      className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition disabled:opacity-50 active:scale-95"
                     >
                       {isProcessing ? (
                         <>
@@ -383,9 +421,33 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                   </div>
                 </div>
 
-                {/* Image Preview Canvas */}
-                <div className="md:col-span-2 bg-slate-950 rounded-xl border border-slate-800 p-3 flex flex-col items-center justify-center min-h-[300px]">
-                  {imageSource ? (
+                {/* Real-time Image Preview Canvas */}
+                <div className="md:col-span-2 bg-slate-950 rounded-xl border border-slate-800 p-3 flex flex-col items-center justify-center min-h-[340px] relative">
+                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-lg p-1 text-[11px]">
+                    <button
+                      onClick={() => setViewMode('processed')}
+                      className={`px-2 py-0.5 rounded font-medium transition ${
+                        viewMode === 'processed' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Cleaned Live Preview
+                    </button>
+                    <button
+                      onClick={() => setViewMode('original')}
+                      className={`px-2 py-0.5 rounded font-medium transition ${
+                        viewMode === 'original' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Original
+                    </button>
+                  </div>
+
+                  {viewMode === 'processed' ? (
+                    <canvas
+                      ref={liveCanvasRef}
+                      className="max-h-[360px] w-auto object-contain rounded-lg border border-slate-800 shadow-md"
+                    />
+                  ) : imageSource ? (
                     <img
                       src={imageSource}
                       alt="Sample Template"
@@ -413,14 +475,14 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                       {extractionResult.totalExtracted} Personal Glyphs Extracted
                     </span>
                     <p className="text-[11px] text-slate-400">
-                      Successfully segmented characters from calibration grid
+                      Successfully segmented characters with 100% transparent backgrounds
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setCurrentStep('save')}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md flex items-center gap-1.5 transition"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md flex items-center gap-1.5 transition active:scale-95"
                 >
                   <span>Continue to Save Profile</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -430,7 +492,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
               {/* Extracted Glyphs Grid Preview */}
               <div className="space-y-2">
                 <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Extracted Glyph Library
+                  Extracted Glyph Library (Transparent PNGs)
                 </div>
                 <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-13 gap-2 max-h-56 overflow-y-auto p-3 bg-slate-950/60 rounded-xl border border-slate-800">
                   {Object.entries(extractionResult.library).map(([char, glyphList]) => (
@@ -463,7 +525,7 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                     <Type className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Live Handwritten Test Render</span>
                   </span>
-                  <span className="text-[10px] text-slate-500">Rendered using your extracted glyphs</span>
+                  <span className="text-[10px] text-slate-500">Rendered directly with transparent strokes</span>
                 </div>
 
                 <input
@@ -535,8 +597,8 @@ export const CreateHandwritingModal: React.FC<CreateHandwritingModalProps> = ({
                   <span className="text-slate-200">Uppercase A-Z, Lowercase a-z, 0-9, Symbols</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Fallback Mode:</span>
-                  <span className="text-emerald-400 font-medium">Auto fallback for missing symbols</span>
+                  <span>Transparency:</span>
+                  <span className="text-emerald-400 font-medium">100% Transparent (No Black Boxes)</span>
                 </div>
               </div>
 

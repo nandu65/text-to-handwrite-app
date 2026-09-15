@@ -99,7 +99,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
               <div
                 className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-visible"
                 style={{
-                  transform: `translate(${lineData.lineOffsetYPx}px) rotate(${lineData.lineDriftAngleDeg}deg)`,
+                  transform: `translate(0px, ${lineData.lineOffsetYPx}px) rotate(${lineData.lineDriftAngleDeg}deg)`,
                   transformOrigin: '0% 100%',
                 }}
               >

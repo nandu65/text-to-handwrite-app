@@ -136,6 +136,7 @@ export function computeCharTransform(
         position: 'relative',
         fontFamily: selectedVariant.fontFamily,
         fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
+        color: style.inkColor,
       },
       isPersonalGlyph: false,
     };
