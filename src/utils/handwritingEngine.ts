@@ -51,6 +51,7 @@ export interface LineRenderProps {
   words: WordRenderProps[];
   lineDriftAngleDeg: number;
   lineOffsetYPx: number;
+  lineOffsetXMarginPx: number;
 }
 
 /**
@@ -282,15 +283,23 @@ export function processHandwrittenLine(
   const intensity = style.variationIntensity ?? 1.0;
   const seed = style.seed ?? 42;
 
-  // Line-level drift & slant calculation
+  // Line-level drift, slant & organic left-margin wandering
   let lineDriftAngleDeg = 0;
   let lineOffsetYPx = 0;
+  let lineOffsetXMarginPx = 0;
 
   if (style.lineDrift && style.subtleVariation) {
     const lineHash = hashValues(seed, pageIndex, lineIndex, 'line-drift');
     const lineRand = mulberry32(lineHash);
     lineDriftAngleDeg = (lineRand() * 2 - 1) * 0.22 * intensity;
     lineOffsetYPx = (lineRand() * 2 - 1) * 0.6 * intensity;
+
+    // Organic left margin indentation wave & human wander
+    const marginHash = hashValues(seed, pageIndex, lineIndex, 'line-margin');
+    const marginRand = mulberry32(marginHash);
+    const waveOffset = Math.sin(lineIndex * 0.9 + (seed % 7)) * 3.5 * intensity;
+    const humanJitter = (marginRand() * 2 - 1) * 2.0 * intensity;
+    lineOffsetXMarginPx = Math.max(-4, Math.min(8, waveOffset + humanJitter));
   }
 
   const rawWords = lineText.split(' ');
@@ -362,5 +371,6 @@ export function processHandwrittenLine(
     words,
     lineDriftAngleDeg,
     lineOffsetYPx,
+    lineOffsetXMarginPx,
   };
 }
