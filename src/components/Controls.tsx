@@ -5,6 +5,7 @@ import {
   PageSize,
   FONT_OPTIONS,
   INK_COLORS,
+  PersonalHandwritingProfile,
 } from '../types';
 import {
   Sliders,
@@ -14,15 +15,30 @@ import {
   Sparkles,
   Maximize2,
   Dices,
-  GitCommit,
+  UserCheck,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 interface ControlsProps {
   style: HandwritingStyle;
   onChange: (updated: Partial<HandwritingStyle>) => void;
+  profiles: PersonalHandwritingProfile[];
+  activeProfile: PersonalHandwritingProfile | null;
+  onSelectProfile: (profile: PersonalHandwritingProfile | null) => void;
+  onOpenCreateModal: () => void;
+  onDeleteProfile: (profileId: string) => void;
 }
 
-export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
+export const Controls: React.FC<ControlsProps> = ({
+  style,
+  onChange,
+  profiles,
+  activeProfile,
+  onSelectProfile,
+  onOpenCreateModal,
+  onDeleteProfile,
+}) => {
   const handleNewSeed = () => {
     const newSeed = Math.floor(Math.random() * 100000);
     onChange({ seed: newSeed });
@@ -98,29 +114,94 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
         </div>
       </div>
 
-      {/* 3. Handwriting Font Selection */}
+      {/* 3. Handwriting Source (Personal Profile vs Built-in Font) */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-          <Type className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Handwriting Font</span>
-        </label>
-        <select
-          value={style.fontFamily}
-          onChange={(e) => {
-            const selected = FONT_OPTIONS.find((f) => f.fontFamily === e.target.value);
-            onChange({
-              fontFamily: e.target.value,
-              fontName: selected ? selected.name : 'Custom',
-            });
-          }}
-          className="w-full bg-slate-950 text-slate-200 text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-indigo-500 outline-none cursor-pointer"
-        >
-          {FONT_OPTIONS.map((font) => (
-            <option key={font.id} value={font.fontFamily}>
-              {font.name} — {font.description}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+            <Type className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Handwriting Source</span>
+          </label>
+          <button
+            type="button"
+            onClick={onOpenCreateModal}
+            className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition"
+          >
+            <Plus className="w-3 h-3" />
+            <span>New Custom Profile</span>
+          </button>
+        </div>
+
+        {/* Source selector dropdown */}
+        <div className="flex gap-2">
+          <select
+            value={
+              style.usePersonalHandwriting && activeProfile
+                ? `profile:${activeProfile.id}`
+                : `font:${style.fontFamily}`
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.startsWith('profile:')) {
+                const pId = val.replace('profile:', '');
+                const target = profiles.find((p) => p.id === pId);
+                if (target) {
+                  onSelectProfile(target);
+                }
+              } else if (val.startsWith('font:')) {
+                const fontFam = val.replace('font:', '');
+                const selected = FONT_OPTIONS.find((f) => f.fontFamily === fontFam);
+                onSelectProfile(null);
+                onChange({
+                  usePersonalHandwriting: false,
+                  fontFamily: fontFam,
+                  fontName: selected ? selected.name : 'Custom',
+                });
+              }
+            }}
+            className="w-full bg-slate-950 text-slate-200 text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-indigo-500 outline-none cursor-pointer"
+          >
+            {profiles.length > 0 && (
+              <optgroup label="🌟 My Personal Handwriting Profiles">
+                {profiles.map((p) => (
+                  <option key={p.id} value={`profile:${p.id}`}>
+                    ✍️ {p.name} ({p.totalExtracted} glyphs)
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
+            <optgroup label="🖋️ Built-in Handwriting Fonts">
+              {FONT_OPTIONS.map((font) => (
+                <option key={font.id} value={`font:${font.fontFamily}`}>
+                  {font.name} — {font.description}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+
+          {style.usePersonalHandwriting && activeProfile && (
+            <button
+              type="button"
+              onClick={() => onDeleteProfile(activeProfile.id)}
+              className="px-2 py-2 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/60 transition"
+              title="Delete this custom handwriting profile"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {style.usePersonalHandwriting && activeProfile && (
+          <div className="flex items-center justify-between text-[11px] bg-emerald-950/30 border border-emerald-800/40 text-emerald-300 px-3 py-1.5 rounded-lg">
+            <span className="flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Using Personal Profile: <strong>{activeProfile.name}</strong></span>
+            </span>
+            <span className="text-[10px] text-emerald-400 font-mono">
+              {activeProfile.totalExtracted} glyphs
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -159,7 +240,7 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
         </div>
       </div>
 
-      {/* 6. Variation Intensity Slider (when variation enabled) */}
+      {/* 6. Variation Intensity Slider */}
       {style.subtleVariation && (
         <div className="space-y-1.5 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
           <div className="flex justify-between text-xs">

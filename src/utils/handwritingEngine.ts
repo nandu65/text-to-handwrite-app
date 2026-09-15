@@ -1,4 +1,5 @@
-import { HandwritingStyle, FONT_OPTIONS, FontVariant } from '../types';
+import { HandwritingStyle, FONT_OPTIONS, FontVariant, PersonalHandwritingProfile, ExtractedGlyph } from '../types';
+import { getTintedGlyphUrl } from './glyphExtractor';
 
 /**
  * Fast seeded pseudo-random number generator (Mulberry32).
@@ -33,6 +34,10 @@ export interface CharRenderProps {
   char: string;
   style: React.CSSProperties;
   key: string;
+  glyphDataUrl?: string;
+  glyphWidthPx?: number;
+  glyphHeightPx?: number;
+  isPersonalGlyph?: boolean;
 }
 
 export interface WordRenderProps {
@@ -70,8 +75,9 @@ export function computeCharTransform(
   pageIndex: number,
   style: HandwritingStyle,
   charOccurrencesInLine: number,
-  prevChar?: string
-): React.CSSProperties {
+  prevChar?: string,
+  activeProfile?: PersonalHandwritingProfile | null
+): { css: React.CSSProperties; glyph?: ExtractedGlyph; isPersonalGlyph: boolean; glyphWidthPx?: number; glyphHeightPx?: number } {
   const intensity = style.variationIntensity ?? 1.0;
   const seed = style.seed ?? 42;
 
@@ -79,31 +85,59 @@ export function computeCharTransform(
   const h = hashValues(seed, pageIndex, lineIndex, wordIndex, charIndexInWord, char);
   const rand = mulberry32(h);
 
+  // Check if personal glyph exists
+  let personalGlyph: ExtractedGlyph | undefined;
+  if (style.usePersonalHandwriting && activeProfile && activeProfile.glyphs[char]) {
+    const glyphVariants = activeProfile.glyphs[char];
+    if (glyphVariants.length > 0) {
+      // Deterministically pick variant
+      const variantIdx = (charOccurrencesInLine + h) % glyphVariants.length;
+      personalGlyph = glyphVariants[variantIdx] || glyphVariants[0];
+    }
+  }
+
+  // Fallback font variant
   const variants = getActiveFontVariants(style);
   let selectedVariant: FontVariant = variants[0];
 
-  // If glyph variation is enabled and character repeats or has multiple occurrences in line
   const isLetter = /[a-zA-Z]/.test(char);
   const isDirectlyRepeated = prevChar && prevChar.toLowerCase() === char.toLowerCase();
 
-  if (style.glyphVariation && isLetter && variants.length > 1) {
+  if (!personalGlyph && style.glyphVariation && isLetter && variants.length > 1) {
     if (isDirectlyRepeated) {
-      // Pick a different variant from the previous letter
       const variantIdx = (h % (variants.length - 1)) + 1;
       selectedVariant = variants[variantIdx] || variants[1];
     } else if (charOccurrencesInLine > 0) {
-      // Alternate variant based on occurrence count and hash
       const variantIdx = (charOccurrencesInLine + h) % variants.length;
       selectedVariant = variants[variantIdx] || variants[0];
     }
   }
 
   if (!style.subtleVariation) {
+    if (personalGlyph) {
+      const targetHeight = style.fontSize * 1.15;
+      const targetWidth = targetHeight * personalGlyph.aspectRatio;
+      return {
+        css: {
+          display: 'inline-block',
+          position: 'relative',
+          verticalAlign: 'baseline',
+        },
+        glyph: personalGlyph,
+        isPersonalGlyph: true,
+        glyphWidthPx: targetWidth,
+        glyphHeightPx: targetHeight,
+      };
+    }
+
     return {
-      display: 'inline-block',
-      position: 'relative',
-      fontFamily: selectedVariant.fontFamily,
-      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
+      css: {
+        display: 'inline-block',
+        position: 'relative',
+        fontFamily: selectedVariant.fontFamily,
+        fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
+      },
+      isPersonalGlyph: false,
     };
   }
 
@@ -111,21 +145,21 @@ export function computeCharTransform(
   const rotRange = 1.4 * intensity;
   const rotateDeg = (rand() * 2 - 1) * rotRange;
 
-  // 2. Baseline & vertical jitter (controlled micro-jitter: -0.7px to +0.6px)
+  // 2. Baseline & vertical jitter
   const dyRange = 0.7 * intensity;
   let dy = (rand() * 2 - 1) * dyRange + (selectedVariant.baselineShift || 0);
 
-  // 3. Horizontal offset (micro-shift: -0.4px to +0.4px)
+  // 3. Horizontal offset
   const dxRange = 0.4 * intensity;
   const dx = (rand() * 2 - 1) * dxRange;
 
-  // 4. Width and Height scale (scaleX 0.95-1.05, scaleY 0.95-1.05) combined with font optical scale
+  // 4. Width and Height scale
   const scaleVar = 0.04 * intensity;
   const baseScale = selectedVariant.scale || 1.0;
   const scaleX = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
   const scaleY = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
 
-  // 5. Skew (natural slant variation from hand movement)
+  // 5. Skew
   const skewRange = 1.2 * intensity;
   const skewX = (rand() * 2 - 1) * skewRange;
 
@@ -140,24 +174,48 @@ export function computeCharTransform(
     else if (wRand < 0.18) weight = 300;
   }
 
-  // 7. Dynamic ink density (slight opacity variation mimicking pen stroke pressure)
+  // 7. Dynamic ink density
   const opacityJitter = 1 - (rand() * 0.07 * intensity);
   const inkOpacity = Math.max(0.85, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
 
   // 8. Individual letter spacing variance
   const letterSpacingDelta = (rand() * 2 - 1) * 0.3 * intensity;
 
+  if (personalGlyph) {
+    const targetHeight = style.fontSize * 1.15 * scaleY;
+    const targetWidth = targetHeight * personalGlyph.aspectRatio * scaleX;
+
+    return {
+      css: {
+        display: 'inline-block',
+        position: 'relative',
+        verticalAlign: 'baseline',
+        transform: `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg)`,
+        transformOrigin: '50% 80%',
+        opacity: inkOpacity,
+        marginRight: `${letterSpacingDelta.toFixed(2)}px`,
+      },
+      glyph: personalGlyph,
+      isPersonalGlyph: true,
+      glyphWidthPx: targetWidth,
+      glyphHeightPx: targetHeight,
+    };
+  }
+
   return {
-    display: 'inline-block',
-    position: 'relative',
-    fontFamily: selectedVariant.fontFamily,
-    transform: `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`,
-    transformOrigin: '50% 80%',
-    fontWeight: weight,
-    opacity: inkOpacity,
-    marginRight: `${letterSpacingDelta.toFixed(2)}px`,
-    fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1, "ss01" 1',
-    WebkitFontSmoothing: 'antialiased',
+    css: {
+      display: 'inline-block',
+      position: 'relative',
+      fontFamily: selectedVariant.fontFamily,
+      transform: `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`,
+      transformOrigin: '50% 80%',
+      fontWeight: weight,
+      opacity: inkOpacity,
+      marginRight: `${letterSpacingDelta.toFixed(2)}px`,
+      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1, "ss01" 1',
+      WebkitFontSmoothing: 'antialiased',
+    },
+    isPersonalGlyph: false,
   };
 }
 
@@ -168,7 +226,8 @@ export function processHandwrittenLine(
   lineText: string,
   lineIndex: number,
   pageIndex: number,
-  style: HandwritingStyle
+  style: HandwritingStyle,
+  activeProfile?: PersonalHandwritingProfile | null
 ): LineRenderProps {
   const intensity = style.variationIntensity ?? 1.0;
   const seed = style.seed ?? 42;
@@ -180,14 +239,14 @@ export function processHandwrittenLine(
   if (style.lineDrift && style.subtleVariation) {
     const lineHash = hashValues(seed, pageIndex, lineIndex, 'line-drift');
     const lineRand = mulberry32(lineHash);
-    lineDriftAngleDeg = (lineRand() * 2 - 1) * 0.22 * intensity; // -0.22deg to +0.22deg
-    lineOffsetYPx = (lineRand() * 2 - 1) * 0.6 * intensity; // -0.6px to +0.6px
+    lineDriftAngleDeg = (lineRand() * 2 - 1) * 0.22 * intensity;
+    lineOffsetYPx = (lineRand() * 2 - 1) * 0.6 * intensity;
   }
 
   const rawWords = lineText.split(' ');
   const words: WordRenderProps[] = [];
 
-  // Track character occurrence counts across the line to vary repeated letters
+  // Track character occurrence counts across the line
   const charOccurrences = new Map<string, number>();
 
   for (let wIdx = 0; wIdx < rawWords.length; wIdx++) {
@@ -195,7 +254,7 @@ export function processHandwrittenLine(
     const wordHash = hashValues(seed, pageIndex, lineIndex, wIdx, 'word');
     const wordRand = mulberry32(wordHash);
 
-    // Natural word space width (between ~0.26em and ~0.38em)
+    // Natural word space width
     const baseSpacePx = style.fontSize * 0.3;
     const spaceVarPx = style.wordSpacingVariation && style.subtleVariation
       ? (wordRand() * 2 - 1) * (style.fontSize * 0.07) * intensity
@@ -211,7 +270,7 @@ export function processHandwrittenLine(
       const occurrenceCount = charOccurrences.get(charLower) || 0;
       charOccurrences.set(charLower, occurrenceCount + 1);
 
-      const charStyle = computeCharTransform(
+      const { css, glyph, isPersonalGlyph, glyphWidthPx, glyphHeightPx } = computeCharTransform(
         char,
         cIdx,
         wIdx,
@@ -219,13 +278,20 @@ export function processHandwrittenLine(
         pageIndex,
         style,
         occurrenceCount,
-        prevChar
+        prevChar,
+        activeProfile
       );
+
+      const glyphDataUrl = glyph ? getTintedGlyphUrl(glyph.dataUrl, style.inkColor) : undefined;
 
       chars.push({
         char,
-        style: charStyle,
+        style: css,
         key: `c-${pageIndex}-${lineIndex}-${wIdx}-${cIdx}-${char}-${occurrenceCount}`,
+        glyphDataUrl,
+        glyphWidthPx,
+        glyphHeightPx,
+        isPersonalGlyph,
       });
 
       prevChar = char;

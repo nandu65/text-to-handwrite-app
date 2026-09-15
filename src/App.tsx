@@ -1,19 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { HandwritingStyle, FONT_OPTIONS, INK_COLORS } from './types';
+import React, { useState, useRef, useEffect } from 'react';
+import { HandwritingStyle, FONT_OPTIONS, INK_COLORS, PersonalHandwritingProfile } from './types';
 import { Header } from './components/Header';
 import { Editor } from './components/Editor';
 import { Controls } from './components/Controls';
 import { PaperPreview } from './components/PaperPreview';
-import { ComingSoonModal } from './components/ComingSoonModal';
+import { CreateHandwritingModal } from './components/CreateHandwritingModal';
 import { exportAllPagesToPNG, exportAllPagesToPDF } from './utils/exportUtils';
-
-const DEFAULT_SAMPLE_TEXT = `The Journey of Innovation
-
-In the quiet corners of discovery, progress is rarely a sudden burst of lightning. Instead, it moves like a slow river carving through rock, patient and persistent.
-
-When we observe how great scientific breakthroughs happen, they almost always begin with a simple curiosity: asking why things are the way they are, and daring to imagine how they could be different.
-
-As we move forward into the digital age, preserving our human touch remains essential. There is an irreplaceable warmth in a handwritten letter, an authentic charm that mechanical perfection can never quite duplicate.`;
+import {
+  getSavedProfiles,
+  getActiveProfileId,
+  setActiveProfileId,
+  deleteProfile as removeProfileStorage,
+} from './utils/personalProfileStorage';
 
 const SAMPLES: Record<'repeated' | 'essay' | 'letter' | 'notes', string> = {
   repeated: `The little letter writer wrote a letter to the teacher. Every little detail matters.
@@ -52,6 +50,10 @@ Arthur`,
 
 export function App() {
   const [text, setText] = useState<string>(SAMPLES.repeated);
+  const [profiles, setProfiles] = useState<PersonalHandwritingProfile[]>([]);
+  const [activeProfile, setActiveProfile] = useState<PersonalHandwritingProfile | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+
   const [style, setStyle] = useState<HandwritingStyle>({
     fontFamily: FONT_OPTIONS[0].fontFamily,
     fontName: FONT_OPTIONS[0].name,
@@ -74,18 +76,37 @@ export function App() {
     variationIntensity: 1.0,
     lineDrift: true,
     wordSpacingVariation: true,
+    usePersonalHandwriting: false,
   });
 
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [pageCount, setPageCount] = useState<number>(1);
-  const [isComingSoonOpen, setIsComingSoonOpen] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Load profiles on mount
+  useEffect(() => {
+    const saved = getSavedProfiles();
+    setProfiles(saved);
+
+    const activeId = getActiveProfileId();
+    if (activeId) {
+      const match = saved.find((p) => p.id === activeId);
+      if (match) {
+        setActiveProfile(match);
+        setStyle((prev) => ({
+          ...prev,
+          usePersonalHandwriting: true,
+          activeProfileId: match.id,
+        }));
+      }
+    }
+  }, []);
+
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
-    setTimeout(() => setStatusMessage(null), 3000);
+    setTimeout(() => setStatusMessage(null), 3200);
   };
 
   const handleStyleChange = (updated: Partial<HandwritingStyle>) => {
@@ -96,8 +117,52 @@ export function App() {
     setText('');
   };
 
-  const handleLoadSample = (sampleType: 'essay' | 'letter' | 'notes') => {
+  const handleLoadSample = (sampleType: 'repeated' | 'essay' | 'letter' | 'notes') => {
     setText(SAMPLES[sampleType]);
+  };
+
+  const handleProfileCreated = (newProfile: PersonalHandwritingProfile) => {
+    const updated = getSavedProfiles();
+    setProfiles(updated);
+    setActiveProfile(newProfile);
+    setStyle((prev) => ({
+      ...prev,
+      usePersonalHandwriting: true,
+      activeProfileId: newProfile.id,
+    }));
+    showStatus(`✨ Personal Handwriting "${newProfile.name}" activated!`);
+  };
+
+  const handleSelectProfile = (profile: PersonalHandwritingProfile | null) => {
+    if (profile) {
+      setActiveProfile(profile);
+      setActiveProfileId(profile.id);
+      setStyle((prev) => ({
+        ...prev,
+        usePersonalHandwriting: true,
+        activeProfileId: profile.id,
+      }));
+      showStatus(`Switched to "${profile.name}" (${profile.totalExtracted} glyphs)`);
+    } else {
+      setActiveProfile(null);
+      setActiveProfileId(null);
+      setStyle((prev) => ({
+        ...prev,
+        usePersonalHandwriting: false,
+        activeProfileId: undefined,
+      }));
+      showStatus('Switched to built-in font');
+    }
+  };
+
+  const handleDeleteProfile = (profileId: string) => {
+    removeProfileStorage(profileId);
+    const updated = getSavedProfiles();
+    setProfiles(updated);
+    if (activeProfile?.id === profileId) {
+      handleSelectProfile(null);
+    }
+    showStatus('Profile deleted.');
   };
 
   const handleExportPNG = async () => {
@@ -140,9 +205,10 @@ export function App() {
       <Header
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
-        onOpenComingSoon={() => setIsComingSoonOpen(true)}
+        onOpenCreateHandwriting={() => setIsCreateModalOpen(true)}
         isExporting={isExporting}
         pageCount={pageCount}
+        hasPersonalProfile={style.usePersonalHandwriting && activeProfile !== null}
       />
 
       {/* Main Split Layout: Left = Editor & Controls, Right = Paper Preview */}
@@ -158,7 +224,15 @@ export function App() {
             />
           </div>
 
-          <Controls style={style} onChange={handleStyleChange} />
+          <Controls
+            style={style}
+            onChange={handleStyleChange}
+            profiles={profiles}
+            activeProfile={activeProfile}
+            onSelectProfile={handleSelectProfile}
+            onOpenCreateModal={() => setIsCreateModalOpen(true)}
+            onDeleteProfile={handleDeleteProfile}
+          />
         </section>
 
         {/* Right Side: Paper Preview Canvas */}
@@ -167,6 +241,7 @@ export function App() {
             text={text}
             style={style}
             pageRefs={pageRefs}
+            activeProfile={activeProfile}
             onPageCountChange={setPageCount}
           />
         </section>
@@ -180,10 +255,11 @@ export function App() {
         </div>
       )}
 
-      {/* Coming Soon Feature Modal */}
-      <ComingSoonModal
-        isOpen={isComingSoonOpen}
-        onClose={() => setIsComingSoonOpen(false)}
+      {/* Create My Handwriting Feature Modal */}
+      <CreateHandwritingModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onProfileCreated={handleProfileCreated}
       />
     </div>
   );

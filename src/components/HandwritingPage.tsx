@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { HandwritingStyle, PaperType } from '../types';
+import { HandwritingStyle, PaperType, PersonalHandwritingProfile } from '../types';
 import { PageLayout } from '../utils/textFlow';
 import { processHandwrittenLine } from '../utils/handwritingEngine';
 
@@ -9,22 +9,23 @@ interface HandwritingPageProps {
   totalPages: number;
   layout: PageLayout;
   style: HandwritingStyle;
+  activeProfile?: PersonalHandwritingProfile | null;
 }
 
 export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
-  ({ lines, pageIndex, totalPages, layout, style }, ref) => {
+  ({ lines, pageIndex, totalPages, layout, style, activeProfile }, ref) => {
     const totalLinesCount = layout.maxLinesPerPage;
     const linesToRender = useMemo(
       () => Array.from({ length: totalLinesCount }, (_, i) => lines[i] || ''),
       [totalLinesCount, lines]
     );
 
-    // Process all lines with the handwriting engine
+    // Process all lines with the handwriting engine and active personal profile
     const processedLines = useMemo(() => {
       return linesToRender.map((lineText, idx) =>
-        processHandwrittenLine(lineText, idx, pageIndex, style)
+        processHandwrittenLine(lineText, idx, pageIndex, style, activeProfile)
       );
-    }, [linesToRender, pageIndex, style]);
+    }, [linesToRender, pageIndex, style, activeProfile]);
 
     // Paper background style
     const getPaperBackground = (type: PaperType) => {
@@ -94,7 +95,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                 />
               )}
 
-              {/* Natural handwritten text line with slight organic drift and character variations */}
+              {/* Natural handwritten text line with slight organic drift, personal glyphs and character variations */}
               <div
                 className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-hidden"
                 style={{
@@ -113,11 +114,33 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                         marginRight: wIdx < lineData.words.length - 1 ? `${wordData.spaceWidthPx}px` : 0,
                       }}
                     >
-                      {wordData.chars.map((charData) => (
-                        <span key={charData.key} style={charData.style}>
-                          {charData.char}
-                        </span>
-                      ))}
+                      {wordData.chars.map((charData) => {
+                        if (charData.isPersonalGlyph && charData.glyphDataUrl) {
+                          return (
+                            <span key={charData.key} style={charData.style} className="inline-flex items-baseline">
+                              <img
+                                src={charData.glyphDataUrl}
+                                alt={charData.char}
+                                draggable={false}
+                                style={{
+                                  width: `${charData.glyphWidthPx || style.fontSize}px`,
+                                  height: `${charData.glyphHeightPx || style.fontSize}px`,
+                                  objectFit: 'contain',
+                                  display: 'inline-block',
+                                  verticalAlign: 'baseline',
+                                  pointerEvents: 'none',
+                                }}
+                              />
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <span key={charData.key} style={charData.style}>
+                            {charData.char}
+                          </span>
+                        );
+                      })}
                     </span>
                   ))
                 )}

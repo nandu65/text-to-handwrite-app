@@ -8,6 +8,7 @@ interface PaperPreviewProps {
   text: string;
   style: HandwritingStyle;
   pageRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  activeProfile?: PersonalHandwritingProfile | null;
   onPageCountChange?: (count: number) => void;
 }
 
@@ -15,6 +16,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
   text,
   style,
   pageRefs,
+  activeProfile,
   onPageCountChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,6 +150,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
               totalPages={pages.length}
               layout={layout}
               style={style}
+              activeProfile={activeProfile}
             />
           </div>
         ))}

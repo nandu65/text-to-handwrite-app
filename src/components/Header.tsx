@@ -1,20 +1,22 @@
 import React from 'react';
-import { PenTool, Download, FileText, Sparkles, Image } from 'lucide-react';
+import { PenTool, FileText, Sparkles, Image } from 'lucide-react';
 
 interface HeaderProps {
   onExportPNG: () => void;
   onExportPDF: () => void;
-  onOpenComingSoon: () => void;
+  onOpenCreateHandwriting: () => void;
   isExporting: boolean;
   pageCount: number;
+  hasPersonalProfile: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onExportPNG,
   onExportPDF,
-  onOpenComingSoon,
+  onOpenCreateHandwriting,
   isExporting,
   pageCount,
+  hasPersonalProfile,
 }) => {
   return (
     <header className="h-16 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
@@ -27,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="font-bold text-lg text-white tracking-tight">Handwrite Studio</h1>
             <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              MVP
+              Personalized
             </span>
           </div>
           <p className="text-xs text-slate-400">Generate realistic handwritten documents in real-time</p>
@@ -36,16 +38,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
-        {/* Placeholder feature badge / button */}
+        {/* Create My Handwriting feature button */}
         <button
-          onClick={onOpenComingSoon}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-300 border border-amber-500/30 text-xs font-medium hover:bg-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          onClick={onOpenCreateHandwriting}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold hover:bg-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
           <span>Create My Handwriting</span>
-          <span className="bg-amber-400/20 text-amber-300 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-            Coming Soon
-          </span>
+          {hasPersonalProfile && (
+            <span className="bg-emerald-500/20 text-emerald-300 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider border border-emerald-500/30">
+              Active
+            </span>
+          )}
         </button>
 
         <div className="h-5 w-[1px] bg-slate-800 hidden sm:block" />

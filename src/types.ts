@@ -124,6 +124,33 @@ export const FONT_OPTIONS: FontOption[] = [
   },
 ];
 
+/**
+ * Extracted personal glyph entry with transparent raster image data URL and aspect ratio metrics.
+ */
+export interface ExtractedGlyph {
+  char: string;
+  dataUrl: string; // Transparent PNG / mask of the character
+  width: number;
+  height: number;
+  aspectRatio: number;
+  baselineOffsetRatio: number; // 0 to 1 relative baseline anchor
+}
+
+export type PersonalGlyphLibrary = Record<string, ExtractedGlyph[]>;
+
+export interface PersonalHandwritingProfile {
+  id: string;
+  name: string;
+  createdDate: string;
+  glyphs: PersonalGlyphLibrary;
+  totalExtracted: number;
+  characterSpacingMultiplier: number;
+  wordSpacingMultiplier: number;
+  lineSpacingMultiplier: number;
+  baselineAdjustment: number;
+  previewSampleText: string;
+}
+
 export interface HandwritingStyle {
   fontFamily: string;
   fontName: string;
@@ -146,6 +173,8 @@ export interface HandwritingStyle {
   variationIntensity: number; // 0 to 2 multiplier (default 1.0)
   lineDrift: boolean; // subtle natural line drift
   wordSpacingVariation: boolean; // natural word gap variance
+  usePersonalHandwriting: boolean; // whether to use personal glyph library
+  activeProfileId?: string;
 }
 
 export const INK_COLORS = [
