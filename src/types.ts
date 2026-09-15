@@ -33,9 +33,9 @@ export const PAGE_SIZES: Record<PageSize, PageDimensions> = {
 export interface HandwritingStyle {
   fontFamily: string;
   fontName: string;
-  fontSize: number; // in px at base scale (e.g., 20)
-  lineSpacing: number; // line-height multiplier e.g. 1.8
-  letterSpacing: number; // in px e.g. 0.5
+  fontSize: number; // in px at base scale (e.g., 22)
+  lineSpacing: number; // line-height multiplier e.g. 1.9
+  letterSpacing: number; // in px e.g. 0.4
   inkColor: string;
   inkOpacity: number;
   paperType: PaperType;
@@ -47,6 +47,10 @@ export interface HandwritingStyle {
   marginBottomMm: number;
   showRedMargin: boolean;
   subtleVariation: boolean;
+  seed: number; // deterministic randomness seed
+  variationIntensity: number; // 0 to 2 multiplier (default 1.0)
+  lineDrift: boolean; // subtle natural line drift
+  wordSpacingVariation: boolean; // natural word gap variance
 }
 
 export interface FontOption {

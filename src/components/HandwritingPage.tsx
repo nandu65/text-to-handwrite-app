@@ -1,6 +1,7 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import { HandwritingStyle, PaperType } from '../types';
 import { PageLayout } from '../utils/textFlow';
+import { processHandwrittenLine } from '../utils/handwritingEngine';
 
 interface HandwritingPageProps {
   lines: string[];
@@ -12,32 +13,18 @@ interface HandwritingPageProps {
 
 export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
   ({ lines, pageIndex, totalPages, layout, style }, ref) => {
-    // Generate line elements matching maxLinesPerPage to render ruled lines across the whole page
     const totalLinesCount = layout.maxLinesPerPage;
-    const linesToRender = Array.from({ length: totalLinesCount }, (_, i) => lines[i] || '');
+    const linesToRender = useMemo(
+      () => Array.from({ length: totalLinesCount }, (_, i) => lines[i] || ''),
+      [totalLinesCount, lines]
+    );
 
-    // Function to render text with subtle character-level rotation/shift
-    const renderHandwrittenText = (lineText: string, lineIdx: number) => {
-      if (!lineText) return <span className="opacity-0">&nbsp;</span>;
-
-      if (!style.subtleVariation) {
-        return <span>{lineText}</span>;
-      }
-
-      // Render character-by-character with pseudo-random deterministic jitter
-      return lineText.split('').map((char, charIdx) => {
-        if (char === ' ') {
-          return <span key={charIdx}> </span>;
-        }
-        // deterministic hash from page, line, char index and char code
-        const hash = (pageIndex * 137 + lineIdx * 43 + charIdx * 19 + char.charCodeAt(0)) % 5;
-        return (
-          <span key={charIdx} className={`char-jitter-${hash}`}>
-            {char}
-          </span>
-        );
-      });
-    };
+    // Process all lines with the handwriting engine
+    const processedLines = useMemo(() => {
+      return linesToRender.map((lineText, idx) =>
+        processHandwrittenLine(lineText, idx, pageIndex, style)
+      );
+    }, [linesToRender, pageIndex, style]);
 
     // Paper background style
     const getPaperBackground = (type: PaperType) => {
@@ -69,7 +56,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
             style={{
               left: `${Math.max(40, layout.marginLeftPx - 16)}px`,
               width: '1.5px',
-              backgroundColor: 'rgba(239, 68, 68, 0.45)', // soft red margin line
+              backgroundColor: 'rgba(239, 68, 68, 0.45)', // soft authentic notebook red line
             }}
           />
         )}
@@ -84,7 +71,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
             paddingBottom: `${layout.marginBottomPx}px`,
           }}
         >
-          {linesToRender.map((lineText, idx) => (
+          {processedLines.map((lineData, idx) => (
             <div
               key={idx}
               className="relative flex items-end"
@@ -93,9 +80,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                 lineHeight: `${layout.lineHeightPx}px`,
                 fontFamily: style.fontFamily,
                 fontSize: `${style.fontSize}px`,
-                letterSpacing: `${style.letterSpacing}px`,
                 color: style.inkColor,
-                opacity: style.inkOpacity,
               }}
             >
               {/* Ruled horizontal line */}
@@ -104,14 +89,38 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                   className="absolute left-0 right-0 bottom-0 pointer-events-none"
                   style={{
                     height: '1px',
-                    backgroundColor: 'rgba(147, 197, 253, 0.65)', // ruled blue line
+                    backgroundColor: 'rgba(147, 197, 253, 0.65)', // crisp ruled blue line
                   }}
                 />
               )}
 
-              {/* Text content */}
-              <div className="relative z-10 w-full truncate pb-1">
-                {renderHandwrittenText(lineText, idx)}
+              {/* Natural handwritten text line with slight organic drift and character variations */}
+              <div
+                className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-hidden"
+                style={{
+                  transform: `translateY(${lineData.lineOffsetYPx}px) rotate(${lineData.lineDriftAngleDeg}deg)`,
+                  transformOrigin: '0% 100%',
+                }}
+              >
+                {lineData.words.length === 0 || (lineData.words.length === 1 && lineData.words[0].chars.length === 0) ? (
+                  <span className="opacity-0">&nbsp;</span>
+                ) : (
+                  lineData.words.map((wordData, wIdx) => (
+                    <span
+                      key={wIdx}
+                      className="inline-flex items-baseline whitespace-nowrap"
+                      style={{
+                        marginRight: wIdx < lineData.words.length - 1 ? `${wordData.spaceWidthPx}px` : 0,
+                      }}
+                    >
+                      {wordData.chars.map((charData) => (
+                        <span key={charData.key} style={charData.style}>
+                          {charData.char}
+                        </span>
+                      ))}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
           ))}

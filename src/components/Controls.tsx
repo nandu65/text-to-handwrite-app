@@ -3,19 +3,18 @@ import {
   HandwritingStyle,
   PaperType,
   PageSize,
-  PAGE_SIZES,
   FONT_OPTIONS,
   INK_COLORS,
 } from '../types';
 import {
   Sliders,
   Type,
-  FileText,
   Palette,
   Layers,
   Sparkles,
-  AlignLeft,
   Maximize2,
+  Dices,
+  GitCommit,
 } from 'lucide-react';
 
 interface ControlsProps {
@@ -24,11 +23,29 @@ interface ControlsProps {
 }
 
 export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
+  const handleNewSeed = () => {
+    const newSeed = Math.floor(Math.random() * 100000);
+    onChange({ seed: newSeed });
+  };
+
   return (
-    <div className="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-h-[380px] overflow-y-auto">
-      <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 tracking-wide uppercase">
-        <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-        <span>Document & Style Controls</span>
+    <div className="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-h-[390px] overflow-y-auto">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 tracking-wide uppercase">
+          <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Document & Style Controls</span>
+        </div>
+
+        {/* Randomize variation seed */}
+        <button
+          type="button"
+          onClick={handleNewSeed}
+          className="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-medium transition active:scale-95"
+          title="Regenerate deterministic handwriting variation seed"
+        >
+          <Dices className="w-3 h-3 text-indigo-400" />
+          <span>Randomize Variation</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -142,7 +159,36 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
         </div>
       </div>
 
-      {/* 6. Ink Color */}
+      {/* 6. Variation Intensity Slider (when variation enabled) */}
+      {style.subtleVariation && (
+        <div className="space-y-1.5 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Natural Variation Strength</span>
+            </span>
+            <span className="text-amber-400 font-mono text-[11px]">
+              {(style.variationIntensity ?? 1.0).toFixed(1)}×
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0.2}
+            max={1.8}
+            step={0.1}
+            value={style.variationIntensity ?? 1.0}
+            onChange={(e) => onChange({ variationIntensity: Number(e.target.value) })}
+            className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+          />
+          <div className="flex justify-between text-[10px] text-slate-500">
+            <span>Subtle</span>
+            <span>Balanced</span>
+            <span>Expressive</span>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Ink Color */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-slate-400 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
@@ -182,31 +228,57 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
         </div>
       </div>
 
-      {/* 7. Additional Options: Subtle Variation & Margin line */}
-      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-        <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300">
-          <input
-            type="checkbox"
-            checked={style.subtleVariation}
-            onChange={(e) => onChange({ subtleVariation: e.target.checked })}
-            className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600"
-          />
-          <span className="flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Natural Character Jitter
-          </span>
-        </label>
-
-        {style.paperType === 'ruled' && (
+      {/* 8. Fine-grained Options */}
+      <div className="pt-2 border-t border-slate-800/80 space-y-2 text-xs">
+        <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300">
             <input
               type="checkbox"
-              checked={style.showRedMargin}
-              onChange={(e) => onChange({ showRedMargin: e.target.checked })}
+              checked={style.subtleVariation}
+              onChange={(e) => onChange({ subtleVariation: e.target.checked })}
               className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600"
             />
-            <span>Red Left Margin Line</span>
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              Natural Character Jitter
+            </span>
           </label>
+
+          {style.paperType === 'ruled' && (
+            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+              <input
+                type="checkbox"
+                checked={style.showRedMargin}
+                onChange={(e) => onChange({ showRedMargin: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600"
+              />
+              <span>Red Margin Line</span>
+            </label>
+          )}
+        </div>
+
+        {style.subtleVariation && (
+          <div className="flex items-center justify-between text-slate-400 text-[11px] pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.lineDrift ?? true}
+                onChange={(e) => onChange({ lineDrift: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>Natural Line Drift</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.wordSpacingVariation ?? true}
+                onChange={(e) => onChange({ wordSpacingVariation: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>Organic Word Spacing</span>
+            </label>
+          </div>
         )}
       </div>
     </div>

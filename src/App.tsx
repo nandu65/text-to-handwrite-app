@@ -66,6 +66,10 @@ export function App() {
     marginBottomMm: 22,
     showRedMargin: true,
     subtleVariation: true,
+    seed: 42,
+    variationIntensity: 1.0,
+    lineDrift: true,
+    wordSpacingVariation: true,
   });
 
   const [isExporting, setIsExporting] = useState<boolean>(false);
