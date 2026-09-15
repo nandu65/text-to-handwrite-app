@@ -132,8 +132,8 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
           </div>
           <input
             type="range"
-            min={14}
-            max={32}
+            min={16}
+            max={40}
             step={1}
             value={style.fontSize}
             onChange={(e) => onChange({ fontSize: Number(e.target.value) })}
@@ -258,25 +258,35 @@ export const Controls: React.FC<ControlsProps> = ({ style, onChange }) => {
         </div>
 
         {style.subtleVariation && (
-          <div className="flex items-center justify-between text-slate-400 text-[11px] pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-400 text-[11px] pt-1">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.glyphVariation ?? true}
+                onChange={(e) => onChange({ glyphVariation: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>Glyph Variants</span>
+            </label>
+
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={style.lineDrift ?? true}
                 onChange={(e) => onChange({ lineDrift: e.target.checked })}
                 className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
               />
-              <span>Natural Line Drift</span>
+              <span>Line Drift</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={style.wordSpacingVariation ?? true}
                 onChange={(e) => onChange({ wordSpacingVariation: e.target.checked })}
                 className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
               />
-              <span>Organic Word Spacing</span>
+              <span>Word Gaps</span>
             </label>
           </div>
         )}

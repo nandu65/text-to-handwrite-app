@@ -42,9 +42,9 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
       if (availableWidth > 0 && availableHeight > 0) {
         const scaleX = availableWidth / layout.widthPx;
         const scaleY = availableHeight / layout.heightPx;
-        // Choose scale that fits width with reasonable bounds
-        const computed = Math.min(scaleX, scaleY, 0.95);
-        setZoomScale(Math.max(0.35, Math.min(1.2, computed)));
+        // Balance width readability and vertical visibility
+        const computed = Math.min(scaleX, Math.max(scaleY, 0.72));
+        setZoomScale(Math.max(0.45, Math.min(1.15, Math.min(scaleX, computed))));
       }
     };
 

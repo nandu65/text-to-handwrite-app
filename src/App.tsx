@@ -15,7 +15,10 @@ When we observe how great scientific breakthroughs happen, they almost always be
 
 As we move forward into the digital age, preserving our human touch remains essential. There is an irreplaceable warmth in a handwritten letter, an authentic charm that mechanical perfection can never quite duplicate.`;
 
-const SAMPLES: Record<'essay' | 'letter' | 'notes', string> = {
+const SAMPLES: Record<'repeated' | 'essay' | 'letter' | 'notes', string> = {
+  repeated: `The little letter writer wrote a letter to the teacher. Every little detail matters.
+
+When we observe how natural handwriting flows across paper, letters like 'l', 't', 'e', and 'r' possess subtle individual traits each time the pen touches down.`,
   essay: `The Influence of Literature on Human Empathy
 
 Literature has long served as a mirror to the human soul, allowing us to traverse boundaries of time, geography, and culture. Through the written word, we step into minds fundamentally different from our own.
@@ -48,13 +51,13 @@ Arthur`,
 };
 
 export function App() {
-  const [text, setText] = useState<string>(DEFAULT_SAMPLE_TEXT);
+  const [text, setText] = useState<string>(SAMPLES.repeated);
   const [style, setStyle] = useState<HandwritingStyle>({
     fontFamily: FONT_OPTIONS[0].fontFamily,
     fontName: FONT_OPTIONS[0].name,
-    fontSize: 22,
-    lineSpacing: 1.9,
-    letterSpacing: 0.4,
+    fontSize: 26,
+    lineSpacing: 1.85,
+    letterSpacing: 0.3,
     inkColor: INK_COLORS[0].value, // Dark Ink
     inkOpacity: 0.95,
     paperType: 'ruled',
@@ -66,6 +69,7 @@ export function App() {
     marginBottomMm: 22,
     showRedMargin: true,
     subtleVariation: true,
+    glyphVariation: true,
     seed: 42,
     variationIntensity: 1.0,
     lineDrift: true,

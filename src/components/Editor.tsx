@@ -5,7 +5,7 @@ interface EditorProps {
   text: string;
   onChange: (value: string) => void;
   onClear: () => void;
-  onLoadSample: (sampleType: 'essay' | 'letter' | 'notes') => void;
+  onLoadSample: (sampleType: 'repeated' | 'essay' | 'letter' | 'notes') => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -28,6 +28,13 @@ export const Editor: React.FC<EditorProps> = ({
 
         {/* Quick Sample Text Buttons */}
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => onLoadSample('repeated')}
+            className="text-[11px] px-2 py-1 rounded bg-indigo-950/80 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/30 transition font-medium"
+            title="Load repeated letters test (l, t, e, r)"
+          >
+            Letters Test
+          </button>
           <button
             onClick={() => onLoadSample('essay')}
             className="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
