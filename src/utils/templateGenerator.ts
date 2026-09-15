@@ -209,7 +209,7 @@ export function generateDemoSampleSheet(fontFamily: string = "'Caveat', cursive"
     const jy = (Math.cos(cell.row * 5 + cell.col) * 1.5);
     const rot = (Math.sin(cell.row + cell.col * 3) * 0.04);
 
-    ctx.translate(x + w / 2 + jx, y + h - 22 + jy);
+    ctx.translate(x + w / 2 + jx, y + h * 0.72 + jy);
     ctx.rotate(rot);
     ctx.fillText(cell.char, 0, 0);
     ctx.restore();

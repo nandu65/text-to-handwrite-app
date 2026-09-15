@@ -117,7 +117,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                       {wordData.chars.map((charData) => {
                         if (charData.isPersonalGlyph && charData.glyphDataUrl) {
                           return (
-                            <span key={charData.key} style={charData.style} className="inline-flex items-baseline">
+                            <span key={charData.key} style={{ ...charData.style, backgroundColor: 'transparent' }} className="inline-flex items-baseline bg-transparent">
                               <img
                                 src={charData.glyphDataUrl}
                                 alt={charData.char}
@@ -129,6 +129,9 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                                   display: 'inline-block',
                                   verticalAlign: 'baseline',
                                   pointerEvents: 'none',
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  boxShadow: 'none',
                                 }}
                               />
                             </span>
