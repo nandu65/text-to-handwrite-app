@@ -198,38 +198,7 @@ export async function extractGlyphsFromImage(
   };
 }
 
-/**
- * Tint transparent PNG glyph with user-selected ink color.
- */
-const tintCache = new Map<string, string>();
-
 export function getTintedGlyphUrl(originalDataUrl: string, inkColor: string): string {
-  const cacheKey = `${originalDataUrl.substring(originalDataUrl.length - 24)}_${inkColor}`;
-  if (tintCache.has(cacheKey)) {
-    return tintCache.get(cacheKey)!;
-  }
-
-  // If using default dark ink, original is ready
-  if (inkColor === '#000000' || inkColor === '#09090b' || inkColor === '#1e293b') {
-    return originalDataUrl;
-  }
-
-  const canvas = document.createElement('canvas');
-  const img = new Image();
-  img.src = originalDataUrl;
-
-  // For immediate synchronous render if image is cached data URL
-  canvas.width = img.naturalWidth || 32;
-  canvas.height = img.naturalHeight || 32;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return originalDataUrl;
-
-  ctx.drawImage(img, 0, 0);
-  ctx.globalCompositeOperation = 'source-in';
-  ctx.fillStyle = inkColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const tintedUrl = canvas.toDataURL('image/png');
-  tintCache.set(cacheKey, tintedUrl);
-  return tintedUrl;
+  // Return the original high-resolution transparent PNG data URL directly
+  return originalDataUrl;
 }

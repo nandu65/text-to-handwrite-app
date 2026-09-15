@@ -97,9 +97,9 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
 
               {/* Natural handwritten text line with slight organic drift, personal glyphs and character variations */}
               <div
-                className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-hidden"
+                className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-visible"
                 style={{
-                  transform: `translateY(${lineData.lineOffsetYPx}px) rotate(${lineData.lineDriftAngleDeg}deg)`,
+                  transform: `translate(${lineData.lineOffsetYPx}px) rotate(${lineData.lineDriftAngleDeg}deg)`,
                   transformOrigin: '0% 100%',
                 }}
               >
