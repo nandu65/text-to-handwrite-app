@@ -1,4 +1,4 @@
-import { PageDimensions, HandwritingStyle } from '../types';
+import { PageDimensions, HandwritingStyle, PersonalHandwritingProfile } from '../types';
 
 export const MM_TO_PX = 3.7795275591; // 1 mm in standard 96 DPI CSS pixels
 
@@ -61,14 +61,61 @@ function getTextWidth(text: string, font: string): number {
 }
 
 /**
+ * Accurately measures the rendered width of text for fonts or personal glyphs.
+ */
+export function measureTextLineWidth(
+  text: string,
+  style: HandwritingStyle,
+  activeProfile?: PersonalHandwritingProfile | null
+): number {
+  const fontSpec = `${style.fontSize}px ${style.fontFamily}`;
+  const baseSpacePx = style.fontSize * 0.3;
+
+  if (style.usePersonalHandwriting && activeProfile && activeProfile.glyphs) {
+    let totalW = 0;
+    const cellHeightPx = style.fontSize * 1.30;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === ' ') {
+        totalW += baseSpacePx;
+        continue;
+      }
+
+      const glyphList = activeProfile.glyphs[char];
+      if (glyphList && glyphList.length > 0) {
+        const glyph = glyphList[0];
+        let relHeight = glyph.heightRatioInCell;
+        if (!relHeight || relHeight <= 0) {
+          if (char === '.' || char === ',') relHeight = 0.20;
+          else if (char === '-' || char === '_') relHeight = 0.15;
+          else if (/[!?:;'"()/@#+]/.test(char)) relHeight = 0.55;
+          else if (/[acegmnopqrsuvwxyz]/.test(char)) relHeight = 0.50;
+          else if (/[bdfhkltA-Z0-9]/.test(char)) relHeight = 0.80;
+          else relHeight = 0.65;
+        }
+        const targetHeight = Math.max(4, cellHeightPx * relHeight);
+        const targetWidth = Math.max(3, targetHeight * glyph.aspectRatio);
+        totalW += targetWidth + 0.5;
+      } else {
+        totalW += getTextWidth(char, fontSpec);
+      }
+    }
+    return totalW;
+  }
+
+  return getTextWidth(text, fontSpec);
+}
+
+/**
  * Splits input text into visual wrapped lines and groups them into pages.
  */
 export function paginateText(
   rawText: string,
   layout: PageLayout,
-  style: HandwritingStyle
+  style: HandwritingStyle,
+  activeProfile?: PersonalHandwritingProfile | null
 ): string[][] {
-  const fontSpec = `${style.fontSize}px ${style.fontFamily}`;
   const paragraphs = rawText.split('\n');
   const allWrappedLines: string[] = [];
 
@@ -85,7 +132,7 @@ export function paginateText(
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const testWidth = getTextWidth(testLine, fontSpec);
+      const testWidth = measureTextLineWidth(testLine, style, activeProfile);
 
       if (testWidth <= layout.printableWidthPx) {
         currentLine = testLine;
@@ -97,7 +144,7 @@ export function paginateText(
           // Word itself is wider than printable width -> break it up
           let partialWord = '';
           for (const char of word) {
-            if (getTextWidth(partialWord + char, fontSpec) <= layout.printableWidthPx) {
+            if (measureTextLineWidth(partialWord + char, style, activeProfile) <= layout.printableWidthPx) {
               partialWord += char;
             } else {
               allWrappedLines.push(partialWord);

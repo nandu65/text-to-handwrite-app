@@ -25,7 +25,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
 
   const dimensions = PAGE_SIZES[style.pageSize];
   const layout = calculateLayout(dimensions, style);
-  const pages = paginateText(text, layout, style);
+  const pages = paginateText(text, layout, style, activeProfile);
 
   useEffect(() => {
     if (onPageCountChange) {

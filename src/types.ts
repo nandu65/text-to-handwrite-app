@@ -134,6 +134,7 @@ export interface ExtractedGlyph {
   height: number;
   aspectRatio: number;
   baselineOffsetRatio: number; // 0 to 1 relative baseline anchor
+  heightRatioInCell?: number; // relative height within writing zone
 }
 
 export type PersonalGlyphLibrary = Record<string, ExtractedGlyph[]>;

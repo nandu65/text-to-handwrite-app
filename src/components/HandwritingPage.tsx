@@ -109,15 +109,16 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                   lineData.words.map((wordData, wIdx) => (
                     <span
                       key={wIdx}
-                      className="inline-flex items-baseline whitespace-nowrap"
+                      className="inline-flex items-baseline whitespace-nowrap shrink-0"
                       style={{
                         marginRight: wIdx < lineData.words.length - 1 ? `${wordData.spaceWidthPx}px` : 0,
+                        flexShrink: 0,
                       }}
                     >
                       {wordData.chars.map((charData) => {
                         if (charData.isPersonalGlyph && charData.glyphDataUrl) {
                           return (
-                            <span key={charData.key} style={{ ...charData.style, backgroundColor: 'transparent' }} className="inline-flex items-baseline bg-transparent">
+                            <span key={charData.key} style={{ ...charData.style, backgroundColor: 'transparent', flexShrink: 0 }} className="inline-flex items-baseline bg-transparent shrink-0">
                               <img
                                 src={charData.glyphDataUrl}
                                 alt={charData.char}
@@ -132,6 +133,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                                   backgroundColor: 'transparent',
                                   border: 'none',
                                   boxShadow: 'none',
+                                  flexShrink: 0,
                                 }}
                               />
                             </span>
@@ -139,7 +141,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                         }
 
                         return (
-                          <span key={charData.key} style={charData.style}>
+                          <span key={charData.key} style={{ ...charData.style, flexShrink: 0 }} className="shrink-0">
                             {charData.char}
                           </span>
                         );

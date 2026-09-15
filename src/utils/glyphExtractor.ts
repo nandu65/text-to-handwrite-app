@@ -292,6 +292,7 @@ export async function extractGlyphsFromImage(
           height: cropH,
           aspectRatio: cropW / Math.max(1, cropH),
           baselineOffsetRatio: maxY / zoneH,
+          heightRatioInCell: strokeH / zoneH,
         };
 
         if (!library[cell.char]) {

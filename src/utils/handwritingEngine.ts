@@ -113,15 +113,39 @@ export function computeCharTransform(
     }
   }
 
+  // Helper to determine proportional glyph height
+  const getProportionalGlyphMetrics = (glyph: ExtractedGlyph, scaleFactorX: number, scaleFactorY: number) => {
+    let relHeight = glyph.heightRatioInCell;
+    if (!relHeight || relHeight <= 0) {
+      if (char === '.' || char === ',') relHeight = 0.20;
+      else if (char === '-' || char === '_') relHeight = 0.15;
+      else if (/[!?:;'"()/@#+]/.test(char)) relHeight = 0.55;
+      else if (/[acegmnopqrsuvwxyz]/.test(char)) relHeight = 0.50;
+      else if (/[bdfhkltA-Z0-9]/.test(char)) relHeight = 0.80;
+      else relHeight = 0.65;
+    }
+
+    const cellHeightPx = style.fontSize * 1.30;
+    const targetHeight = Math.max(4, cellHeightPx * relHeight * scaleFactorY);
+    const targetWidth = Math.max(3, targetHeight * glyph.aspectRatio * scaleFactorX);
+
+    // Baseline alignment: how far from the baseline this glyph's bottom should sit
+    const glyphBottomRatio = glyph.baselineOffsetRatio ?? 0.75;
+    const baselineYRatio = 0.75;
+    const glyphBaselineShift = (glyphBottomRatio - baselineYRatio) * cellHeightPx * 0.4;
+
+    return { targetHeight, targetWidth, glyphBaselineShift };
+  };
+
   if (!style.subtleVariation) {
     if (personalGlyph) {
-      const targetHeight = style.fontSize * 1.15;
-      const targetWidth = targetHeight * personalGlyph.aspectRatio;
+      const { targetHeight, targetWidth, glyphBaselineShift } = getProportionalGlyphMetrics(personalGlyph, 1.0, 1.0);
       return {
         css: {
-          display: 'inline-block',
+          display: 'inline-flex',
           position: 'relative',
           verticalAlign: 'baseline',
+          transform: `translate(0px, ${glyphBaselineShift.toFixed(2)}px)`,
         },
         glyph: personalGlyph,
         isPersonalGlyph: true,
@@ -183,15 +207,15 @@ export function computeCharTransform(
   const letterSpacingDelta = (rand() * 2 - 1) * 0.3 * intensity;
 
   if (personalGlyph) {
-    const targetHeight = style.fontSize * 1.15 * scaleY;
-    const targetWidth = targetHeight * personalGlyph.aspectRatio * scaleX;
+    const { targetHeight, targetWidth, glyphBaselineShift } = getProportionalGlyphMetrics(personalGlyph, scaleX, scaleY);
+    const totalDy = dy + glyphBaselineShift;
 
     return {
       css: {
-        display: 'inline-block',
+        display: 'inline-flex',
         position: 'relative',
         verticalAlign: 'baseline',
-        transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg)`,
+        transform: `translate(${dx.toFixed(2)}px, ${totalDy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg)`,
         transformOrigin: '50% 80%',
         opacity: inkOpacity,
         marginRight: `${letterSpacingDelta.toFixed(2)}px`,
