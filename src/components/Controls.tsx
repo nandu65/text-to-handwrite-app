@@ -276,13 +276,165 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </div>
 
+      {/* Cursive & Messiness Personality Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+        {/* Cursive Forward Slant */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-300 flex items-center gap-1.5">
+              <span>✍️ Cursive Slant</span>
+            </span>
+            <span className="text-indigo-400 font-mono text-[11px]">
+              {style.cursiveSlant ?? 8}°
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={18}
+            step={1}
+            value={style.cursiveSlant ?? 8}
+            onChange={(e) => onChange({ cursiveSlant: Number(e.target.value) })}
+            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+          />
+          <div className="flex justify-between text-[10px] text-slate-500">
+            <span>Upright (0°)</span>
+            <span>Natural (8°)</span>
+            <span>Rushed (18°)</span>
+          </div>
+        </div>
+
+        {/* Messiness / Rushed Penmanship */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-slate-300 flex items-center gap-1.5">
+              <span>⚡ Messy / Rushed Flow</span>
+            </span>
+            <span className="text-amber-400 font-mono text-[11px]">
+              {(style.messiness ?? 1.0).toFixed(1)}×
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0.2}
+            max={2.0}
+            step={0.1}
+            value={style.messiness ?? 1.0}
+            onChange={(e) => onChange({ messiness: Number(e.target.value) })}
+            className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+          />
+          <div className="flex justify-between text-[10px] text-slate-500">
+            <span>Neat (0.2)</span>
+            <span>Natural (1.0)</span>
+            <span>Messy / Fast (2.0)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Handwriting Presets */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Quick Handwriting Presets</span>
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const f = FONT_OPTIONS.find((opt) => opt.id === 'rushed-cursive') || FONT_OPTIONS[0];
+              onSelectProfile(null);
+              onChange({
+                usePersonalHandwriting: false,
+                fontFamily: f.fontFamily,
+                fontName: f.name,
+                cursiveSlant: 14,
+                messiness: 1.6,
+                letterSpacing: -1.0,
+                wordSpacing: 0.9,
+                variationIntensity: 1.4,
+                connectedCursive: true,
+              });
+            }}
+            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
+          >
+            ⚡ Rushed Notes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const f = FONT_OPTIONS.find((opt) => opt.id === 'doctor-scrawl') || FONT_OPTIONS[0];
+              onSelectProfile(null);
+              onChange({
+                usePersonalHandwriting: false,
+                fontFamily: f.fontFamily,
+                fontName: f.name,
+                cursiveSlant: 16,
+                messiness: 1.8,
+                letterSpacing: -1.5,
+                wordSpacing: 0.85,
+                variationIntensity: 1.5,
+                connectedCursive: true,
+              });
+            }}
+            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
+          >
+            🩺 Doctor Scrawl
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const f = FONT_OPTIONS.find((opt) => opt.id === 'cedarville') || FONT_OPTIONS[0];
+              onSelectProfile(null);
+              onChange({
+                usePersonalHandwriting: false,
+                fontFamily: f.fontFamily,
+                fontName: f.name,
+                cursiveSlant: 9,
+                messiness: 1.1,
+                letterSpacing: -0.5,
+                wordSpacing: 1.0,
+                variationIntensity: 1.1,
+                connectedCursive: true,
+              });
+            }}
+            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
+          >
+            ✍️ Loose Cursive
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const f = FONT_OPTIONS.find((opt) => opt.id === 'kalam') || FONT_OPTIONS[0];
+              onSelectProfile(null);
+              onChange({
+                usePersonalHandwriting: false,
+                fontFamily: f.fontFamily,
+                fontName: f.name,
+                cursiveSlant: 5,
+                messiness: 0.8,
+                letterSpacing: 0,
+                wordSpacing: 1.1,
+                variationIntensity: 0.9,
+                connectedCursive: true,
+              });
+            }}
+            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
+          >
+            📝 Everyday Pen
+          </button>
+        </div>
+      </div>
+
       {/* 6. Variation Intensity Slider */}
       {style.subtleVariation && (
         <div className="space-y-1.5 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
           <div className="flex justify-between text-xs">
             <span className="font-medium text-slate-300 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Natural Variation Strength</span>
+              <span>Overall Variation Strength</span>
             </span>
             <span className="text-amber-400 font-mono text-[11px]">
               {(style.variationIntensity ?? 1.0).toFixed(1)}×
@@ -297,11 +449,6 @@ export const Controls: React.FC<ControlsProps> = ({
             onChange={(e) => onChange({ variationIntensity: Number(e.target.value) })}
             className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
           />
-          <div className="flex justify-between text-[10px] text-slate-500">
-            <span>Subtle</span>
-            <span>Balanced</span>
-            <span>Expressive</span>
-          </div>
         </div>
       )}
 
@@ -375,7 +522,17 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
 
         {style.subtleVariation && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-400 text-[11px] pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-400 text-[11px] pt-1">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.connectedCursive ?? true}
+                onChange={(e) => onChange({ connectedCursive: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>Cursive Flow</span>
+            </label>
+
             <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -399,11 +556,11 @@ export const Controls: React.FC<ControlsProps> = ({
             <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={style.wordSpacingVariation ?? true}
-                onChange={(e) => onChange({ wordSpacingVariation: e.target.checked })}
+                checked={style.inkBleed ?? true}
+                onChange={(e) => onChange({ inkBleed: e.target.checked })}
                 className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
               />
-              <span>Word Gaps</span>
+              <span>Ink Bleed</span>
             </label>
           </div>
         )}

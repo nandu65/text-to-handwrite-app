@@ -78,10 +78,14 @@ export function computeCharTransform(
   charOccurrencesInLine: number,
   prevChar?: string,
   nextChar?: string,
+  wordLength: number = 1,
   activeProfile?: PersonalHandwritingProfile | null
 ): { css: React.CSSProperties; glyph?: ExtractedGlyph; isPersonalGlyph: boolean; glyphWidthPx?: number; glyphHeightPx?: number } {
   const intensity = style.variationIntensity ?? 1.0;
+  const messiness = style.messiness ?? 1.0;
   const seed = style.seed ?? 42;
+  const cursiveSlant = style.cursiveSlant ?? 8;
+  const connectedCursive = style.connectedCursive ?? true;
 
   // Compute unique hash for this character occurrence
   const h = hashValues(seed, pageIndex, lineIndex, wordIndex, charIndexInWord, char);
@@ -139,7 +143,7 @@ export function computeCharTransform(
     return { targetHeight, targetWidth, glyphBaselineShift };
   };
 
-  // Natural handwriting kerning compensation between letters
+  // Natural handwriting cursive kerning compensation between letters
   let baseKerning = 0;
   if (personalGlyph) {
     const isNextPunctuation = nextChar ? /[.,!?:;'"\-_()/@#+]/.test(nextChar) : false;
@@ -148,13 +152,17 @@ export function computeCharTransform(
     if (!nextChar) {
       baseKerning = 0;
     } else if (isNextPunctuation) {
-      baseKerning = -Math.round(style.fontSize * 0.14);
+      baseKerning = -Math.round(style.fontSize * 0.15);
     } else if (isCurrentPunctuation) {
-      baseKerning = -Math.round(style.fontSize * 0.05);
+      baseKerning = -Math.round(style.fontSize * 0.06);
     } else {
-      // Natural cursive letter-to-letter connection
-      baseKerning = -Math.round(style.fontSize * 0.12);
+      // Natural flowing cursive connection overlap
+      const cursiveOverlapRatio = connectedCursive ? 0.16 + 0.03 * messiness : 0.10;
+      baseKerning = -Math.round(style.fontSize * cursiveOverlapRatio);
     }
+  } else if (connectedCursive && isLetter && nextChar && /[a-zA-Z]/.test(nextChar)) {
+    // Subtle font ligature tucking
+    baseKerning = -Math.round(style.fontSize * 0.04);
   }
 
   const userLetterSpacing = style.letterSpacing ?? 0;
@@ -167,7 +175,8 @@ export function computeCharTransform(
           display: 'inline-flex',
           position: 'relative',
           verticalAlign: 'baseline',
-          transform: `translate(0px, ${glyphBaselineShift.toFixed(2)}px)`,
+          transform: `translate(0px, ${glyphBaselineShift.toFixed(2)}px) skewX(${-cursiveSlant}deg)`,
+          transformOrigin: '50% 85%',
           marginRight: `${(baseKerning + userLetterSpacing).toFixed(2)}px`,
         },
         glyph: personalGlyph,
@@ -182,54 +191,84 @@ export function computeCharTransform(
         display: 'inline-block',
         position: 'relative',
         fontFamily: selectedVariant.fontFamily,
-        fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
+        fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "swsh" 1, "kern" 1',
         color: style.inkColor,
-        marginRight: `${userLetterSpacing.toFixed(2)}px`,
+        transform: `skewX(${-cursiveSlant}deg)`,
+        transformOrigin: '50% 85%',
+        marginRight: `${(baseKerning + userLetterSpacing).toFixed(2)}px`,
       },
       isPersonalGlyph: false,
     };
   }
 
-  // 1. Rotation (subtle angle variation: e.g. -1.4deg to +1.4deg at 1.0 intensity)
-  const rotRange = 1.4 * intensity;
-  const rotateDeg = (rand() * 2 - 1) * rotRange;
+  // 1. Rotation & Cursive Momentum (e.g. -2.5deg to +2.5deg)
+  const rotRange = (1.5 + 0.9 * messiness) * intensity;
+  let rotateDeg = (rand() * 2 - 1) * rotRange;
 
-  // 2. Baseline & vertical jitter
-  const dyRange = 0.7 * intensity;
+  // 2. Baseline & Rushed Vertical Wobble
+  const dyRange = (0.7 + 0.6 * messiness) * intensity;
   let dy = (rand() * 2 - 1) * dyRange + (selectedVariant.baselineShift || 0);
 
+  // Hurried letter wave inside a word: middle letters arch slightly, ending drops
+  if (wordLength > 2) {
+    const arcPos = (charIndexInWord + 0.5) / wordLength;
+    const midWave = Math.sin(arcPos * Math.PI) * (-0.9 * messiness * intensity);
+    const endSettle = (charIndexInWord / wordLength) * (0.5 * messiness * intensity);
+    dy += midWave + endSettle;
+  }
+
   // 3. Horizontal offset
-  const dxRange = 0.4 * intensity;
+  const dxRange = (0.4 + 0.3 * messiness) * intensity;
   const dx = (rand() * 2 - 1) * dxRange;
 
-  // 4. Width and Height scale
-  const scaleVar = 0.04 * intensity;
+  // 4. Width and Height scale (Hurried messy dynamics: fast vowels compress, ascenders shoot up)
+  const scaleVar = (0.04 + 0.05 * messiness) * intensity;
   const baseScale = selectedVariant.scale || 1.0;
-  const scaleX = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
-  const scaleY = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
+  let scaleX = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
+  let scaleY = baseScale * (1 + (rand() * 2 - 1) * scaleVar);
 
-  // 5. Skew
-  const skewRange = 1.2 * intensity;
-  const skewX = (rand() * 2 - 1) * skewRange;
+  const isFastVowel = /[aeoucs]/.test(char);
+  const isTallAscender = /[bdfhkltA-Z]/.test(char);
+  const isDescender = /[gjpqy]/.test(char);
 
-  // 6. Stroke Weight / Pressure variation
+  if (messiness > 0.6) {
+    if (isFastVowel && charIndexInWord > 0 && charIndexInWord < wordLength - 1) {
+      scaleX *= Math.max(0.85, 1 - (0.07 * messiness));
+      scaleY *= Math.max(0.88, 1 - (0.05 * messiness));
+    } else if (isTallAscender) {
+      scaleY *= 1 + (0.08 * messiness);
+      rotateDeg += 1.2 * messiness; // extra forward tilt on tall strokes
+    } else if (isDescender) {
+      scaleY *= 1 + (0.07 * messiness);
+      dy += 0.6 * messiness;
+    }
+  }
+
+  // 5. Cursive Forward Slant + Jitter
+  const skewRange = (1.2 + 1.0 * messiness) * intensity;
+  const forwardSlant = -cursiveSlant + (rand() * 2 - 1) * skewRange;
+
+  // 6. Stroke Weight / Pressure variation (Heavier downstrokes, thin upstrokes)
   let weight = 400;
   if (isDirectlyRepeated) {
-    dy += (rand() > 0.5 ? 0.5 : -0.5) * intensity;
+    dy += (rand() > 0.5 ? 0.6 : -0.6) * messiness * intensity;
+    scaleX *= 0.94; // 2nd repeated letter is written faster
     weight = rand() > 0.5 ? 500 : 300;
   } else {
     const wRand = rand();
-    if (wRand > 0.82) weight = 500;
-    else if (wRand < 0.18) weight = 300;
+    if (wRand > 0.80) weight = 500;
+    else if (wRand < 0.20) weight = 300;
   }
 
-  // 7. Dynamic ink density
-  const opacityJitter = 1 - (rand() * 0.07 * intensity);
-  const inkOpacity = Math.max(0.85, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
+  // 7. Dynamic ink density & subtle pressure pooling
+  const opacityJitter = 1 - (rand() * (0.06 + 0.04 * messiness) * intensity);
+  const inkOpacity = Math.max(0.82, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
 
   // 8. Individual letter spacing variance
-  const letterSpacingDelta = (rand() * 2 - 1) * 0.25 * intensity;
+  const letterSpacingDelta = (rand() * 2 - 1) * (0.22 + 0.15 * messiness) * intensity;
   const totalMarginRight = baseKerning + userLetterSpacing + letterSpacingDelta;
+
+  const inkShadow = (style.inkBleed ?? true) ? 'drop-shadow(0 0 0.35px rgba(24, 32, 48, 0.45))' : 'none';
 
   if (personalGlyph) {
     const { targetHeight, targetWidth, glyphBaselineShift } = getProportionalGlyphMetrics(personalGlyph, scaleX, scaleY);
@@ -240,9 +279,10 @@ export function computeCharTransform(
         display: 'inline-flex',
         position: 'relative',
         verticalAlign: 'baseline',
-        transform: `translate(${dx.toFixed(2)}px, ${totalDy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg)`,
-        transformOrigin: '50% 80%',
+        transform: `translate(${dx.toFixed(2)}px, ${totalDy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${forwardSlant.toFixed(2)}deg)`,
+        transformOrigin: '50% 85%',
         opacity: inkOpacity,
+        filter: inkShadow,
         marginRight: `${totalMarginRight.toFixed(2)}px`,
       },
       glyph: personalGlyph,
@@ -258,12 +298,13 @@ export function computeCharTransform(
       position: 'relative',
       fontFamily: selectedVariant.fontFamily,
       color: style.inkColor,
-      transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${skewX.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`,
-      transformOrigin: '50% 80%',
+      transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rotateDeg.toFixed(2)}deg) skewX(${forwardSlant.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`,
+      transformOrigin: '50% 85%',
       fontWeight: weight,
       opacity: inkOpacity,
+      filter: inkShadow,
       marginRight: `${totalMarginRight.toFixed(2)}px`,
-      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "kern" 1',
+      fontFeatureSettings: '"calt" 1, "liga" 1, "dlig" 1, "swsh" 1, "kern" 1',
       WebkitFontSmoothing: 'antialiased',
     },
     isPersonalGlyph: false,
@@ -281,6 +322,7 @@ export function processHandwrittenLine(
   activeProfile?: PersonalHandwritingProfile | null
 ): LineRenderProps {
   const intensity = style.variationIntensity ?? 1.0;
+  const messiness = style.messiness ?? 1.0;
   const seed = style.seed ?? 42;
 
   // Line-level drift, slant & organic left-margin wandering
@@ -291,15 +333,15 @@ export function processHandwrittenLine(
   if (style.lineDrift && style.subtleVariation) {
     const lineHash = hashValues(seed, pageIndex, lineIndex, 'line-drift');
     const lineRand = mulberry32(lineHash);
-    lineDriftAngleDeg = (lineRand() * 2 - 1) * 0.22 * intensity;
-    lineOffsetYPx = (lineRand() * 2 - 1) * 0.6 * intensity;
+    lineDriftAngleDeg = (lineRand() * 2 - 1) * (0.24 + 0.15 * messiness) * intensity;
+    lineOffsetYPx = (lineRand() * 2 - 1) * (0.6 + 0.4 * messiness) * intensity;
 
     // Organic left margin indentation wave & human wander
     const marginHash = hashValues(seed, pageIndex, lineIndex, 'line-margin');
     const marginRand = mulberry32(marginHash);
-    const waveOffset = Math.sin(lineIndex * 0.9 + (seed % 7)) * 3.5 * intensity;
-    const humanJitter = (marginRand() * 2 - 1) * 2.0 * intensity;
-    lineOffsetXMarginPx = Math.max(-4, Math.min(8, waveOffset + humanJitter));
+    const waveOffset = Math.sin(lineIndex * 0.9 + (seed % 7)) * (3.5 + 1.5 * messiness) * intensity;
+    const humanJitter = (marginRand() * 2 - 1) * (2.0 + 1.2 * messiness) * intensity;
+    lineOffsetXMarginPx = Math.max(-6, Math.min(10, waveOffset + humanJitter));
   }
 
   const rawWords = lineText.split(' ');
@@ -317,7 +359,7 @@ export function processHandwrittenLine(
     const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
     const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
     const spaceVarPx = style.wordSpacingVariation && style.subtleVariation
-      ? (wordRand() * 2 - 1) * (style.fontSize * 0.05) * intensity
+      ? (wordRand() * 2 - 1) * (style.fontSize * (0.05 + 0.03 * messiness)) * intensity
       : 0;
     const spaceWidthPx = Math.max(4, Math.round(baseSpacePx + spaceVarPx));
 
@@ -341,6 +383,7 @@ export function processHandwrittenLine(
         occurrenceCount,
         prevChar,
         nextChar,
+        word.length,
         activeProfile
       );
 

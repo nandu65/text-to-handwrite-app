@@ -105,14 +105,20 @@ export function measureTextLineWidth(
         if (nextChar) {
           const isNextPunctuation = /[.,!?:;'"\-_()/@#+]/.test(nextChar);
           const isCurrentPunctuation = /[.,!?:;'"\-_()/@#+]/.test(char);
-          if (isNextPunctuation) kerningPx = -Math.round(style.fontSize * 0.14);
-          else if (isCurrentPunctuation) kerningPx = -Math.round(style.fontSize * 0.05);
-          else kerningPx = -Math.round(style.fontSize * 0.12);
+          if (isNextPunctuation) kerningPx = -Math.round(style.fontSize * 0.15);
+          else if (isCurrentPunctuation) kerningPx = -Math.round(style.fontSize * 0.06);
+          else {
+            const cursiveOverlapRatio = (style.connectedCursive ?? true) ? 0.16 + 0.03 * (style.messiness ?? 1.0) : 0.10;
+            kerningPx = -Math.round(style.fontSize * cursiveOverlapRatio);
+          }
         }
 
         totalW += Math.max(1, targetWidth + kerningPx + userLetterSpacing);
       } else {
-        totalW += getTextWidth(char, fontSpec) + userLetterSpacing;
+        const fontOverlap = (style.connectedCursive ?? true) && nextChar && /[a-zA-Z]/.test(nextChar)
+          ? -Math.round(style.fontSize * 0.04)
+          : 0;
+        totalW += getTextWidth(char, fontSpec) + fontOverlap + userLetterSpacing;
       }
     }
     return totalW;

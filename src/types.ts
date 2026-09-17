@@ -46,8 +46,55 @@ export interface FontOption {
 
 export const FONT_OPTIONS: FontOption[] = [
   {
+    id: 'rushed-cursive',
+    name: '⚡ Rushed Notes (Messy Fast Cursive)',
+    fontFamily: "'Reenie Beanie', cursive",
+    description: 'Fast, hurried student notes with messy cursive connectors and rapid strokes',
+    variants: [
+      { fontFamily: "'Reenie Beanie', cursive", scale: 1.18, baselineShift: -0.4 },
+      { fontFamily: "'Nothing You Could Do', cursive", scale: 0.96, baselineShift: 0.3 },
+      { fontFamily: "'Cedarville Cursive', cursive", scale: 0.92, baselineShift: 0.1 },
+      { fontFamily: "'Zeyada', cursive", scale: 1.10, baselineShift: -0.3 },
+    ],
+  },
+  {
+    id: 'doctor-scrawl',
+    name: "🩺 Doctor's Scrawl (Hurried Cursive)",
+    fontFamily: "'Nothing You Could Do', cursive",
+    description: 'Imperfect, rushed natural penmanship with variable loops and baseline drift',
+    variants: [
+      { fontFamily: "'Nothing You Could Do', cursive", scale: 1.0, baselineShift: 0 },
+      { fontFamily: "'La Belle Aurore', cursive", scale: 1.05, baselineShift: -0.5 },
+      { fontFamily: "'Just Another Hand', cursive", scale: 1.15, baselineShift: -0.2 },
+      { fontFamily: "'Meddon', cursive", scale: 0.88, baselineShift: 0.4 },
+    ],
+  },
+  {
+    id: 'cedarville',
+    name: '✍️ Cedarville Cursive (Organic Flow)',
+    fontFamily: "'Cedarville Cursive', cursive",
+    description: 'Authentic loose cursive handwriting with continuous ligature flow',
+    variants: [
+      { fontFamily: "'Cedarville Cursive', cursive", scale: 1.0, baselineShift: 0 },
+      { fontFamily: "'Caveat', cursive", scale: 1.08, baselineShift: -0.4 },
+      { fontFamily: "'Bad Script', cursive", scale: 0.94, baselineShift: 0.2 },
+      { fontFamily: "'Dancing Script', cursive", scale: 1.02, baselineShift: 0.1 },
+    ],
+  },
+  {
+    id: 'belle-aurore',
+    name: '🖋️ La Belle Aurore (Casual Scratch)',
+    fontFamily: "'La Belle Aurore', cursive",
+    description: 'Light, quick scratchy pen handwriting with loose character forms',
+    variants: [
+      { fontFamily: "'La Belle Aurore', cursive", scale: 1.08, baselineShift: 0 },
+      { fontFamily: "'Reenie Beanie', cursive", scale: 1.14, baselineShift: -0.4 },
+      { fontFamily: "'Waiting for the Sunrise', cursive", scale: 1.06, baselineShift: 0.3 },
+    ],
+  },
+  {
     id: 'caveat',
-    name: 'Caveat (Casual Cursive)',
+    name: 'Caveat (Smooth Connected Script)',
     fontFamily: "'Caveat', cursive",
     description: 'Dynamic flowing cursive with natural ligature alternates',
     variants: [
@@ -57,41 +104,8 @@ export const FONT_OPTIONS: FontOption[] = [
     ],
   },
   {
-    id: 'shadows',
-    name: 'Shadows Into Light (Neat Modern)',
-    fontFamily: "'Shadows Into Light', cursive",
-    description: 'Clean modern script with distinct print strokes',
-    variants: [
-      { fontFamily: "'Shadows Into Light', cursive", scale: 1.0, baselineShift: 0 },
-      { fontFamily: "'Architects Daughter', cursive", scale: 0.92, baselineShift: -0.8 },
-      { fontFamily: "'Covered By Your Grace', cursive", scale: 1.02, baselineShift: 0.4 },
-    ],
-  },
-  {
-    id: 'indie',
-    name: 'Indie Flower (Friendly Rounded)',
-    fontFamily: "'Indie Flower', cursive",
-    description: 'Warm, rounded penmanship with soft character loops',
-    variants: [
-      { fontFamily: "'Indie Flower', cursive", scale: 1.0, baselineShift: 0 },
-      { fontFamily: "'Gochi Hand', cursive", scale: 0.92, baselineShift: -0.3 },
-      { fontFamily: "'Schoolbell', cursive", scale: 0.95, baselineShift: 0.2 },
-    ],
-  },
-  {
-    id: 'patrick',
-    name: 'Patrick Hand (Schoolbook Print)',
-    fontFamily: "'Patrick Hand', cursive",
-    description: 'Clean print handwriting with neat legibility',
-    variants: [
-      { fontFamily: "'Patrick Hand', cursive", scale: 1.0, baselineShift: 0 },
-      { fontFamily: "'Shantell Sans', cursive", scale: 0.92, baselineShift: -0.4 },
-      { fontFamily: "'Schoolbell', cursive", scale: 0.93, baselineShift: 0.3 },
-    ],
-  },
-  {
     id: 'kalam',
-    name: 'Kalam (Ballpoint Pen)',
+    name: 'Kalam (Everyday Ballpoint)',
     fontFamily: "'Kalam', cursive",
     description: 'Everyday ballpoint note-taking style with realistic stroke taper',
     variants: [
@@ -102,9 +116,9 @@ export const FONT_OPTIONS: FontOption[] = [
   },
   {
     id: 'dancing',
-    name: 'Dancing Script (Flowing Script)',
+    name: 'Dancing Script (Expressive Loops)',
     fontFamily: "'Dancing Script', cursive",
-    description: 'Expressive rhythmic cursive with varied loops',
+    description: 'Expressive rhythmic cursive with varied loops and bounce',
     variants: [
       { fontFamily: "'Dancing Script', cursive", scale: 1.0, baselineShift: 0 },
       { fontFamily: "'Marck Script', cursive", scale: 0.92, baselineShift: 0.2 },
@@ -120,6 +134,28 @@ export const FONT_OPTIONS: FontOption[] = [
       { fontFamily: "'Homemade Apple', cursive", scale: 1.0, baselineShift: 0 },
       { fontFamily: "'Reenie Beanie', cursive", scale: 1.15, baselineShift: -0.5 },
       { fontFamily: "'Nothing You Could Do', cursive", scale: 0.96, baselineShift: 0.3 },
+    ],
+  },
+  {
+    id: 'shadows',
+    name: 'Shadows Into Light (Quick Print)',
+    fontFamily: "'Shadows Into Light', cursive",
+    description: 'Clean modern script with distinct print strokes',
+    variants: [
+      { fontFamily: "'Shadows Into Light', cursive", scale: 1.0, baselineShift: 0 },
+      { fontFamily: "'Architects Daughter', cursive", scale: 0.92, baselineShift: -0.8 },
+      { fontFamily: "'Covered By Your Grace', cursive", scale: 1.02, baselineShift: 0.4 },
+    ],
+  },
+  {
+    id: 'indie',
+    name: 'Indie Flower (Rounded Friendly)',
+    fontFamily: "'Indie Flower', cursive",
+    description: 'Warm, rounded penmanship with soft character loops',
+    variants: [
+      { fontFamily: "'Indie Flower', cursive", scale: 1.0, baselineShift: 0 },
+      { fontFamily: "'Gochi Hand', cursive", scale: 0.92, baselineShift: -0.3 },
+      { fontFamily: "'Schoolbell', cursive", scale: 0.95, baselineShift: 0.2 },
     ],
   },
 ];
@@ -159,6 +195,10 @@ export interface HandwritingStyle {
   lineSpacing: number; // line-height multiplier e.g. 1.85
   letterSpacing: number; // in px e.g. 0.0
   wordSpacing?: number; // word gap multiplier e.g. 1.0 (0.6x to 1.8x)
+  cursiveSlant?: number; // forward cursive slant in degrees (0 to 18 deg)
+  messiness?: number; // 0.2 to 2.0 messy handwriting / rushed intensity
+  connectedCursive?: boolean; // cursive ligature flow and connected stroke tails
+  inkBleed?: boolean; // micro ink pooling and realistic pressure variance
   inkColor: string;
   inkOpacity: number;
   paperType: PaperType;
