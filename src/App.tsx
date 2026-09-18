@@ -106,17 +106,6 @@ export function App() {
     lineDrift: true,
     wordSpacingVariation: true,
     usePersonalHandwriting: false,
-    stickyNotes: [
-      {
-        id: 'sn-welcome',
-        text: '📌 Tip: Click any line on the page to edit directly!',
-        color: 'yellow',
-        rotationDeg: -2.5,
-        topPercent: 8,
-        leftPercent: 68,
-        widthPx: 145,
-      },
-    ],
   });
 
   const [isExporting, setIsExporting] = useState<boolean>(false);

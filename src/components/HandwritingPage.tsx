@@ -90,8 +90,8 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
           overflow: 'hidden',
         }}
       >
-        {/* Mobile Camera Lighting & Vignette Overlays */}
-        {style.scannerLighting && (
+        {/* Mobile Camera Lighting, Tone & Phone Shadow Overlays */}
+        {(style.scannerLighting || (style.cameraLightingTone && style.cameraLightingTone !== 'neutral')) && (
           <>
             <div
               className="scanner-lighting-overlay"
@@ -102,9 +102,11 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                 className={`absolute inset-0 pointer-events-none z-20 mix-blend-multiply tone-${style.cameraLightingTone}`}
               />
             )}
-            {style.cameraPhoneShadow && <div className="phone-cast-shadow" />}
           </>
         )}
+
+        {/* Smartphone silhouette cast shadow */}
+        {style.cameraPhoneShadow && <div className="phone-cast-shadow" />}
 
         {/* Paper Creases / Folds */}
         {style.paperCreases && <div className="paper-creases" />}
@@ -412,42 +414,6 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
             );
           })}
         </div>
-
-        {/* 3. Sticky Notes Overlay */}
-        {style.stickyNotes && style.stickyNotes.length > 0 && (
-          <div className="absolute inset-0 pointer-events-none z-30">
-            {style.stickyNotes.map((note) => {
-              const noteColorBg =
-                note.color === 'pink'
-                  ? 'bg-pink-100 border-pink-300 text-pink-950 shadow-pink-900/20'
-                  : note.color === 'cyan'
-                  ? 'bg-cyan-100 border-cyan-300 text-cyan-950 shadow-cyan-900/20'
-                  : note.color === 'green'
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-950 shadow-emerald-900/20'
-                  : 'bg-amber-100 border-amber-300 text-amber-950 shadow-amber-900/20';
-
-              return (
-                <div
-                  key={note.id}
-                  className={`absolute p-3 rounded-sm border shadow-lg font-serif text-xs ${noteColorBg}`}
-                  style={{
-                    top: `${note.topPercent}%`,
-                    left: `${note.leftPercent}%`,
-                    width: `${note.widthPx || 140}px`,
-                    transform: `rotate(${note.rotationDeg || -2}deg)`,
-                    fontFamily: style.fontFamily,
-                    fontSize: `${Math.max(13, style.fontSize * 0.65)}px`,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {/* Adhesive top strip tape */}
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-white/40 border border-white/60 shadow-xs rotate-1 backdrop-blur-xs rounded-xs" />
-                  <p className="whitespace-pre-wrap font-medium">{note.text}</p>
-                </div>
-              );
-            })}
-          </div>
-        )}
 
         {/* Discreet Page Number at bottom right */}
         {totalPages > 1 && (

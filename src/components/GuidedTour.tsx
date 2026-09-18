@@ -150,7 +150,7 @@ const TOUR_STEPS: TourStep[] = [
       'Preview your handwritten document in real-time with full interactive features.',
     tips: [
       'Click directly on any line of text on the paper to edit text in place.',
-      'Pin custom handwritten Sticky Notes to margins.',
+      'Auto-formats indentation, margin wrapping, and line ruling.',
       'Zoom in/out and Fit-to-Screen controls at top right.',
     ],
     preferredPlacement: 'left',

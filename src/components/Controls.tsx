@@ -9,7 +9,6 @@ import {
   CameraLightingTone,
   DeskSurface,
   PageShadowDepth,
-  StickyNote,
   FONT_OPTIONS,
   INK_COLORS,
   HIGHLIGHTER_COLORS,
@@ -30,7 +29,6 @@ import {
   Scroll,
   Highlighter,
   HelpCircle,
-  StickyNote as StickyNoteIcon,
   X,
   AlignLeft,
   MoveHorizontal,
@@ -59,35 +57,10 @@ export const Controls: React.FC<ControlsProps> = ({
   onDeleteProfile,
 }) => {
   const [showSyntaxGuide, setShowSyntaxGuide] = useState(false);
-  const [showStickyModal, setShowStickyModal] = useState(false);
-  const [newStickyText, setNewStickyText] = useState('');
-  const [newStickyColor, setNewStickyColor] = useState<'yellow' | 'pink' | 'cyan' | 'green'>('yellow');
 
   const handleNewSeed = () => {
     const newSeed = Math.floor(Math.random() * 100000);
     onChange({ seed: newSeed });
-  };
-
-  const handleAddStickyNote = () => {
-    if (!newStickyText.trim()) return;
-    const currentNotes = style.stickyNotes || [];
-    const newNote: StickyNote = {
-      id: 'sn-' + Date.now(),
-      text: newStickyText.trim(),
-      color: newStickyColor,
-      rotationDeg: Math.random() * 8 - 4,
-      topPercent: 8 + ((currentNotes.length * 15) % 65),
-      leftPercent: currentNotes.length % 2 === 0 ? 68 : 72,
-      widthPx: 145,
-    };
-    onChange({ stickyNotes: [...currentNotes, newNote] });
-    setNewStickyText('');
-    setShowStickyModal(false);
-  };
-
-  const handleRemoveStickyNote = (id: string) => {
-    const currentNotes = style.stickyNotes || [];
-    onChange({ stickyNotes: currentNotes.filter((n) => n.id !== id) });
   };
 
   return (
@@ -767,114 +740,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </div>
 
-      {/* 8. Sticky Notes Section */}
-      <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/60 space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-            <StickyNoteIcon className="w-3.5 h-3.5 text-amber-400" />
-            <span>Pinned Sticky Notes (Margin / Corrections)</span>
-          </label>
-          <button
-            type="button"
-            onClick={() => setShowStickyModal(true)}
-            className="text-[11px] text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 transition"
-          >
-            <Plus className="w-3 h-3" />
-            <span>Add Sticky Note</span>
-          </button>
-        </div>
-
-        {style.stickyNotes && style.stickyNotes.length > 0 ? (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {style.stickyNotes.map((note) => (
-              <div
-                key={note.id}
-                className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-300"
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    note.color === 'pink'
-                      ? 'bg-pink-400'
-                      : note.color === 'cyan'
-                      ? 'bg-cyan-400'
-                      : note.color === 'green'
-                      ? 'bg-emerald-400'
-                      : 'bg-amber-400'
-                  }`}
-                />
-                <span className="max-w-[120px] truncate">{note.text}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveStickyNote(note.id)}
-                  className="text-slate-500 hover:text-red-400 transition ml-1"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[11px] text-slate-500">
-            No sticky notes added. Click "+ Add Sticky Note" to pin margin notes or teacher marks.
-          </p>
-        )}
-
-        {/* Modal / Card to add sticky note */}
-        {showStickyModal && (
-          <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 space-y-2 mt-2">
-            <div className="flex justify-between items-center text-xs font-medium text-slate-300">
-              <span>New Sticky Note</span>
-              <button
-                type="button"
-                onClick={() => setShowStickyModal(false)}
-                className="text-slate-500 hover:text-slate-300"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <textarea
-              rows={2}
-              value={newStickyText}
-              onChange={(e) => setNewStickyText(e.target.value)}
-              placeholder="e.g., Remember to submit by Friday! Or Teacher Red review comment..."
-              className="w-full bg-slate-950 text-slate-200 text-xs rounded p-2 border border-slate-800 focus:border-indigo-500 outline-none resize-none"
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {(['yellow', 'pink', 'cyan', 'green'] as const).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setNewStickyColor(c)}
-                    className={`w-5 h-5 rounded-full border transition ${
-                      newStickyColor === c
-                        ? 'scale-125 border-white'
-                        : 'border-transparent opacity-70 hover:opacity-100'
-                    } ${
-                      c === 'pink'
-                        ? 'bg-pink-300'
-                        : c === 'cyan'
-                        ? 'bg-cyan-300'
-                        : c === 'green'
-                        ? 'bg-emerald-300'
-                        : 'bg-amber-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={handleAddStickyNote}
-                className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition"
-              >
-                Pin to Page
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 9. Realistic Handwriting Flow & Ink Physics */}
+      {/* 8. Realistic Handwriting Flow & Ink Physics */}
       <div className="pt-2 border-t border-slate-800/80 space-y-2 text-xs">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300">

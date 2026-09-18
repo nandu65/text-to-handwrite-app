@@ -192,16 +192,6 @@ export type PaperTexture = 'white' | 'parchment' | 'kraft' | 'cream';
 export type EdgeStyle = 'none' | 'spiral' | 'binder-holes';
 export type HighlighterColor = 'yellow' | 'cyan' | 'pink' | 'lime';
 
-export interface StickyNote {
-  id: string;
-  text: string;
-  color: 'yellow' | 'pink' | 'cyan' | 'green';
-  rotationDeg: number;
-  topPercent: number;
-  leftPercent: number;
-  widthPx: number;
-}
-
 export type CameraLightingTone = 'neutral' | 'warm-desk' | 'cool-office' | 'dramatic-lamp' | 'golden-sunset';
 export type DeskSurface = 'none' | 'oak-wood' | 'dark-walnut' | 'marble' | 'slate';
 export type PageShadowDepth = 'none' | 'subtle' | 'floating' | 'deep';
@@ -230,7 +220,7 @@ export interface HandwritingStyle {
   cameraDeskShadow?: PageShadowDepth; // desk elevation shadow
   deskSurface?: DeskSurface; // desk material behind paper
   paperCreases?: boolean; // subtle center fold and corner creases
-  highlighterColor?: HighlighterColor; // 'yellow' | 'cyan' | 'pink'
+  highlighterColor?: HighlighterColor; // 'yellow' | 'cyan' | 'pink' | 'lime'
   inkColor: string;
   inkOpacity: number;
   paperType: PaperType;
@@ -249,7 +239,6 @@ export interface HandwritingStyle {
   wordSpacingVariation: boolean; // natural word gap variance
   usePersonalHandwriting: boolean; // whether to use personal glyph library
   activeProfileId?: string;
-  stickyNotes?: StickyNote[];
 }
 
 export const INK_COLORS = [
