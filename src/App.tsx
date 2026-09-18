@@ -68,6 +68,9 @@ export function App() {
     lineSpacing: 1.85,
     letterSpacing: -0.5,
     wordSpacing: 1.0,
+    paragraphSpacing: 0,
+    paragraphIndent: 0,
+    sectionSpacing: 0,
     cursiveSlant: 10,
     messiness: 1.2,
     connectedCursive: true,
@@ -76,6 +79,11 @@ export function App() {
     paperTexture: 'white',
     edgeStyle: 'spiral',
     scannerLighting: false,
+    cameraLightingTone: 'neutral',
+    cameraDeskShadow: 'floating',
+    cameraPhoneShadow: false,
+    deskSurface: 'none',
+    paperCreases: false,
     highlighterColor: 'yellow',
     inkColor: INK_COLORS[0].value, // Dark Ink
     inkOpacity: 0.95,
@@ -97,7 +105,7 @@ export function App() {
     stickyNotes: [
       {
         id: 'sn-welcome',
-        text: '📌 Tip: Try ~~scratch~~, ==highlight==, ((circle)), and [x] in the text editor!',
+        text: '📌 Tip: Click any line on the page to edit directly!',
         color: 'yellow',
         rotationDeg: -2.5,
         topPercent: 8,
@@ -141,95 +149,91 @@ export function App() {
     setStyle((prev) => ({ ...prev, ...updated }));
   };
 
-  const handleClear = () => {
-    setText('');
-  };
-
-  const handleLoadSample = (sampleType: 'repeated' | 'essay' | 'letter' | 'notes') => {
-    setText(SAMPLES[sampleType]);
-  };
-
-  const handleProfileCreated = (newProfile: PersonalHandwritingProfile) => {
-    const updated = getSavedProfiles();
-    setProfiles(updated);
-    setActiveProfile(newProfile);
-    setStyle((prev) => ({
-      ...prev,
-      usePersonalHandwriting: true,
-      activeProfileId: newProfile.id,
-    }));
-    showStatus(`✨ Personal Handwriting "${newProfile.name}" activated!`);
-  };
-
   const handleSelectProfile = (profile: PersonalHandwritingProfile | null) => {
+    setActiveProfile(profile);
     if (profile) {
-      setActiveProfile(profile);
       setActiveProfileId(profile.id);
       setStyle((prev) => ({
         ...prev,
         usePersonalHandwriting: true,
         activeProfileId: profile.id,
+        letterSpacing: profile.characterSpacingMultiplier ? (profile.characterSpacingMultiplier - 1) * 10 : prev.letterSpacing,
+        wordSpacing: profile.wordSpacingMultiplier || prev.wordSpacing,
+        lineSpacing: profile.lineSpacingMultiplier || prev.lineSpacing,
       }));
-      showStatus(`Switched to "${profile.name}" (${profile.totalExtracted} glyphs)`);
+      showStatus(`Applied profile: ${profile.name}`);
     } else {
-      setActiveProfile(null);
       setActiveProfileId(null);
       setStyle((prev) => ({
         ...prev,
         usePersonalHandwriting: false,
         activeProfileId: undefined,
       }));
-      showStatus('Switched to built-in font');
     }
+  };
+
+  const handleProfileCreated = (profile: PersonalHandwritingProfile) => {
+    setProfiles((prev) => [profile, ...prev.filter((p) => p.id !== profile.id)]);
+    handleSelectProfile(profile);
+    showStatus(`Personal handwriting "${profile.name}" created with ${profile.totalExtracted} extracted glyphs!`);
   };
 
   const handleDeleteProfile = (profileId: string) => {
     removeProfileStorage(profileId);
-    const updated = getSavedProfiles();
-    setProfiles(updated);
-    if (activeProfile?.id === profileId) {
+    setProfiles((prev) => prev.filter((p) => p.id !== profileId));
+    if (activeProfile && activeProfile.id === profileId) {
       handleSelectProfile(null);
     }
-    showStatus('Profile deleted.');
+    showStatus('Custom handwriting profile deleted');
+  };
+
+  const handleClear = () => {
+    setText('');
+  };
+
+  const handleLoadSample = (sampleKey: 'repeated' | 'essay' | 'letter' | 'notes') => {
+    setText(SAMPLES[sampleKey]);
   };
 
   const handleExportPNG = async () => {
+    if (isExporting) return;
     const validPages = pageRefs.current.filter((el): el is HTMLDivElement => el !== null);
     if (validPages.length === 0) return;
 
     try {
       setIsExporting(true);
-      showStatus('Generating high-resolution PNG...');
-      await exportAllPagesToPNG(validPages);
-      showStatus(`Exported ${validPages.length} ${validPages.length === 1 ? 'page' : 'pages'} to PNG!`);
+      showStatus('Rendering ultra-crisp handwritten PNG pages...');
+      await exportAllPagesToPNG(validPages, `handwritten-notes-${Date.now()}`);
+      showStatus('Downloaded PNG image pages successfully!');
     } catch (err) {
       console.error('PNG export failed:', err);
-      showStatus('Export failed. Please try again.');
+      showStatus('Failed to export PNG. Please try again.');
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleExportPDF = async () => {
+    if (isExporting) return;
     const validPages = pageRefs.current.filter((el): el is HTMLDivElement => el !== null);
     if (validPages.length === 0) return;
 
     try {
       setIsExporting(true);
-      showStatus(`Generating ${style.pageSize} PDF...`);
-      await exportAllPagesToPDF(validPages, style.pageSize);
-      showStatus(`Exported ${style.pageSize} PDF successfully!`);
+      showStatus('Generating multi-page PDF document...');
+      await exportAllPagesToPDF(validPages, style.pageSize, `handwritten-notes-${Date.now()}`);
+      showStatus('Downloaded PDF document successfully!');
     } catch (err) {
       console.error('PDF export failed:', err);
-      showStatus('PDF export failed. Please try again.');
+      showStatus('Failed to export PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
-      {/* Top Navigation / Header */}
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+      {/* Top Application Header Bar */}
       <Header
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
@@ -271,6 +275,7 @@ export function App() {
             pageRefs={pageRefs}
             activeProfile={activeProfile}
             onPageCountChange={setPageCount}
+            onTextChange={setText}
           />
         </section>
       </main>

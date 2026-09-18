@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { HandwritingStyle, PAGE_SIZES } from '../types';
+import { HandwritingStyle, PAGE_SIZES, PersonalHandwritingProfile } from '../types';
 import { calculateLayout, paginateText } from '../utils/textFlow';
 import { HandwritingPage } from './HandwritingPage';
-import { ZoomIn, ZoomOut, RotateCcw, FileText, ChevronUp, ChevronDown } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, FileText, MousePointer } from 'lucide-react';
 
 interface PaperPreviewProps {
   text: string;
@@ -10,6 +10,7 @@ interface PaperPreviewProps {
   pageRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
   activeProfile?: PersonalHandwritingProfile | null;
   onPageCountChange?: (count: number) => void;
+  onTextChange?: (newText: string) => void;
 }
 
 export const PaperPreview: React.FC<PaperPreviewProps> = ({
@@ -18,6 +19,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
   pageRefs,
   activeProfile,
   onPageCountChange,
+  onTextChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoomScale, setZoomScale] = useState<number>(0.75);
@@ -77,10 +79,21 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
     }
   };
 
+  const handleUpdateLine = (pageIdx: number, lineIdx: number, newText: string) => {
+    if (!onTextChange) return;
+    const updatedPages = pages.map((page, p) =>
+      p === pageIdx ? page.map((line, l) => (l === lineIdx ? newText : line)) : page
+    );
+    const flattenedText = updatedPages.map((p) => p.join('\n')).join('\n');
+    onTextChange(flattenedText);
+  };
+
+  const deskClass = style.deskSurface && style.deskSurface !== 'none' ? `desk-${style.deskSurface}` : '';
+
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-950/80 overflow-hidden relative select-none">
       {/* Top Preview Status & Zoom Bar */}
-      <div className="h-11 border-b border-slate-800/80 px-6 flex items-center justify-between shrink-0 bg-slate-900/60 backdrop-blur z-20">
+      <div className="h-11 border-b border-slate-800/80 px-6 flex items-center justify-between shrink-0 bg-slate-900/60 backdrop-blur z-20 flex-wrap gap-2">
         <div className="flex items-center gap-3 text-xs text-slate-300">
           <div className="flex items-center gap-1.5 font-medium">
             <FileText className="w-4 h-4 text-indigo-400" />
@@ -92,6 +105,11 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
           </span>
           <span className="text-slate-600">•</span>
           <span className="capitalize text-slate-400">{style.paperType} Paper</span>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <span className="text-[11px] text-amber-400/90 font-medium hidden sm:flex items-center gap-1">
+            <MousePointer className="w-3 h-3" />
+            <span>Click any text to edit inline</span>
+          </span>
         </div>
 
         {/* Zoom Controls */}
@@ -123,13 +141,15 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
         </div>
       </div>
 
-      {/* Pages Container with display scaling */}
+      {/* Pages Container with display scaling & optional desk background */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto overflow-x-auto p-8 flex flex-col items-center gap-10"
-        style={{
-          background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
-        }}
+        className={`flex-1 overflow-y-auto overflow-x-auto p-8 flex flex-col items-center gap-10 ${deskClass}`}
+        style={
+          !deskClass
+            ? { background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)' }
+            : undefined
+        }
       >
         {pages.map((pageLines, index) => (
           <div
@@ -137,10 +157,10 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
             className="transition-transform duration-150 origin-top flex flex-col items-center"
             style={{
               transform: `scale(${zoomScale})`,
-              marginBottom: `${(layout.heightPx * (zoomScale - 1))}px`,
+              marginBottom: `${layout.heightPx * (zoomScale - 1)}px`,
             }}
           >
-            {/* Handwriting Document Page */}
+            {/* Handwriting Document Page with Click-to-Edit */}
             <HandwritingPage
               ref={(el) => {
                 pageRefs.current[index] = el;
@@ -151,6 +171,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
               layout={layout}
               style={style}
               activeProfile={activeProfile}
+              onUpdateLine={handleUpdateLine}
             />
           </div>
         ))}

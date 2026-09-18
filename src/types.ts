@@ -202,6 +202,10 @@ export interface StickyNote {
   widthPx: number;
 }
 
+export type CameraLightingTone = 'neutral' | 'warm-desk' | 'cool-office' | 'dramatic-lamp' | 'golden-sunset';
+export type DeskSurface = 'none' | 'oak-wood' | 'dark-walnut' | 'marble' | 'slate';
+export type PageShadowDepth = 'none' | 'subtle' | 'floating' | 'deep';
+
 export interface HandwritingStyle {
   fontFamily: string;
   fontName: string;
@@ -209,6 +213,9 @@ export interface HandwritingStyle {
   lineSpacing: number; // line-height multiplier e.g. 1.85
   letterSpacing: number; // in px e.g. 0.0
   wordSpacing?: number; // word gap multiplier e.g. 1.0 (0.6x to 1.8x)
+  paragraphSpacing?: number; // extra empty lines or ratio between paragraphs (0 to 3)
+  paragraphIndent?: number; // first-line indent in px (0 to 60px)
+  sectionSpacing?: number; // extra spacing before headers/sections (0 to 3)
   cursiveSlant?: number; // forward cursive slant in degrees (0 to 18 deg)
   messiness?: number; // 0.2 to 2.0 messy handwriting / rushed intensity
   connectedCursive?: boolean; // cursive ligature flow and connected stroke tails
@@ -217,6 +224,12 @@ export interface HandwritingStyle {
   paperTexture?: PaperTexture; // 'white' | 'parchment' | 'kraft' | 'cream'
   edgeStyle?: EdgeStyle; // 'none' | 'spiral' | 'binder-holes'
   scannerLighting?: boolean; // realistic mobile cam scanner lighting vignette
+  cameraLightingTone?: CameraLightingTone; // warmth & mood of light
+  cameraVignetteStrength?: number; // 0 to 1 intensity
+  cameraPhoneShadow?: boolean; // casts phone/hand silhouette shadow
+  cameraDeskShadow?: PageShadowDepth; // desk elevation shadow
+  deskSurface?: DeskSurface; // desk material behind paper
+  paperCreases?: boolean; // subtle center fold and corner creases
   highlighterColor?: HighlighterColor; // 'yellow' | 'cyan' | 'pink'
   inkColor: string;
   inkOpacity: number;

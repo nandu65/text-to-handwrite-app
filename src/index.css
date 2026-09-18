@@ -75,6 +75,84 @@
   z-index: 20;
 }
 
+.tone-warm-desk {
+  background: 
+    radial-gradient(circle at 25% 20%, rgba(254, 240, 138, 0.5) 0%, rgba(251, 191, 36, 0.25) 50%, rgba(180, 83, 9, 0.2) 100%),
+    linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.15) 100%);
+}
+
+.tone-cool-office {
+  background: 
+    radial-gradient(circle at 40% 30%, rgba(224, 242, 254, 0.45) 0%, rgba(56, 189, 248, 0.2) 60%, rgba(30, 41, 59, 0.2) 100%),
+    linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.12) 100%);
+}
+
+.tone-dramatic-lamp {
+  background: 
+    radial-gradient(circle at 18% 15%, rgba(255, 255, 255, 0.8) 0%, rgba(253, 224, 71, 0.4) 35%, rgba(15, 23, 42, 0.5) 85%),
+    linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.35) 100%);
+}
+
+.tone-golden-sunset {
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(253, 186, 116, 0.55) 0%, rgba(244, 114, 182, 0.25) 55%, rgba(67, 56, 202, 0.22) 100%),
+    linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%, rgba(0,0,0,0.18) 100%);
+}
+
+/* Smartphone / Hand silhouette shadow */
+.phone-cast-shadow {
+  position: absolute;
+  top: -20px;
+  right: -10px;
+  width: 48%;
+  height: 52%;
+  background: radial-gradient(ellipse at 85% 15%, rgba(15, 23, 42, 0.38) 0%, rgba(15, 23, 42, 0.22) 45%, transparent 75%);
+  transform: rotate(18deg) skewX(-12deg);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 25;
+  mix-blend-mode: multiply;
+}
+
+/* Paper Fold Creases */
+.paper-creases {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 18;
+  background-image: 
+    linear-gradient(to bottom, transparent 49.6%, rgba(0,0,0,0.06) 49.9%, rgba(255,255,255,0.12) 50.1%, transparent 50.4%),
+    linear-gradient(to right, transparent 49.6%, rgba(0,0,0,0.05) 49.9%, rgba(255,255,255,0.1) 50.1%, transparent 50.4%);
+}
+
+/* Desk Surface Backgrounds */
+.desk-oak-wood {
+  background-color: #854d0e;
+  background-image: 
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 3px, transparent 3px, transparent 18px),
+    radial-gradient(circle at 50% 50%, #a16207 0%, #713f12 100%);
+}
+
+.desk-dark-walnut {
+  background-color: #291d17;
+  background-image: 
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 24px),
+    radial-gradient(circle at 50% 50%, #3e2b22 0%, #1c1410 100%);
+}
+
+.desk-marble {
+  background-color: #f1f5f9;
+  background-image: 
+    radial-gradient(ellipse at 30% 20%, rgba(148, 163, 184, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(203, 213, 225, 0.4) 0%, transparent 60%),
+    linear-gradient(45deg, #e2e8f0 0%, #f8fafc 100%);
+}
+
+.desk-slate {
+  background-color: #0f172a;
+  background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+}
+
 /* Character variation micro-rotations */
 .char-jitter-0 { display: inline-block; transform: rotate(0deg); }
 .char-jitter-1 { display: inline-block; transform: rotate(-0.75deg) translateY(-0.3px); }
@@ -82,10 +160,34 @@
 .char-jitter-3 { display: inline-block; transform: rotate(-0.4deg) translateY(0.4px); }
 .char-jitter-4 { display: inline-block; transform: rotate(0.5deg) translateY(-0.2px); }
 
-/* Realistic Paper Shadow */
+/* Realistic Paper Shadow Variants */
 .page-shadow {
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.08),
     0 10px 25px -5px rgba(0, 0, 0, 0.3),
     0 20px 40px -15px rgba(0, 0, 0, 0.4);
+}
+
+.shadow-depth-subtle {
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 4px 10px -2px rgba(0, 0, 0, 0.15);
+}
+
+.shadow-depth-floating {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.12),
+    0 16px 32px -4px rgba(0, 0, 0, 0.35),
+    0 30px 60px -12px rgba(0, 0, 0, 0.45);
+}
+
+.shadow-depth-deep {
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.2),
+    0 25px 50px -12px rgba(0, 0, 0, 0.55),
+    0 45px 80px -20px rgba(0, 0, 0, 0.7);
+}
+
+.shadow-depth-none {
+  box-shadow: none;
 }

@@ -6,6 +6,9 @@ import {
   PaperTexture,
   EdgeStyle,
   HighlighterColor,
+  CameraLightingTone,
+  DeskSurface,
+  PageShadowDepth,
   StickyNote,
   FONT_OPTIONS,
   INK_COLORS,
@@ -29,6 +32,11 @@ import {
   HelpCircle,
   StickyNote as StickyNoteIcon,
   X,
+  AlignLeft,
+  MoveHorizontal,
+  MoveVertical,
+  Sun,
+  Box,
 } from 'lucide-react';
 
 interface ControlsProps {
@@ -67,8 +75,8 @@ export const Controls: React.FC<ControlsProps> = ({
       id: 'sn-' + Date.now(),
       text: newStickyText.trim(),
       color: newStickyColor,
-      rotationDeg: (Math.random() * 8 - 4),
-      topPercent: 8 + (currentNotes.length * 15) % 65,
+      rotationDeg: Math.random() * 8 - 4,
+      topPercent: 8 + ((currentNotes.length * 15) % 65),
       leftPercent: currentNotes.length % 2 === 0 ? 68 : 72,
       widthPx: 145,
     };
@@ -83,12 +91,12 @@ export const Controls: React.FC<ControlsProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-h-[410px] overflow-y-auto">
+    <div className="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-h-[430px] overflow-y-auto">
       {/* Header with quick actions */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 tracking-wide uppercase">
           <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Document & Style Controls</span>
+          <span>Document & Typography Controls</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -158,7 +166,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       )}
 
-      {/* 1. Page & Paper Properties */}
+      {/* 1. Page Size & Ruling */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Page Size */}
         <div className="space-y-1.5">
@@ -209,7 +217,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </div>
 
-      {/* 2. Authentic Paper Textures & Edge Style */}
+      {/* 2. Paper Textures & Spiral / Binder Edge */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         {/* Paper Texture */}
         <div className="space-y-1.5">
@@ -286,7 +294,6 @@ export const Controls: React.FC<ControlsProps> = ({
           </button>
         </div>
 
-        {/* Source selector dropdown */}
         <div className="flex gap-2">
           <select
             value={
@@ -359,232 +366,333 @@ export const Controls: React.FC<ControlsProps> = ({
         )}
       </div>
 
-      {/* 4. Handwriting Size & Spacings */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Handwriting Size */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-400">Handwriting Size</span>
-            <span className="text-indigo-400 font-mono">{style.fontSize}px</span>
-          </div>
-          <input
-            type="range"
-            min={16}
-            max={40}
-            step={1}
-            value={style.fontSize}
-            onChange={(e) => onChange({ fontSize: Number(e.target.value) })}
-            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
+      {/* 4. Complete Typography, Spacing & Layout Sliders */}
+      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+        <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+          <AlignLeft className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Typography, Indent & Paragraph Spacings</span>
         </div>
 
-        {/* Line Spacing */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-400">Line Spacing</span>
-            <span className="text-indigo-400 font-mono">{style.lineSpacing.toFixed(1)}×</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Font Size */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Font Size</span>
+              <span className="text-indigo-400 font-mono font-medium">{style.fontSize}px</span>
+            </div>
+            <input
+              type="range"
+              min={16}
+              max={44}
+              step={1}
+              value={style.fontSize}
+              onChange={(e) => onChange({ fontSize: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
-          <input
-            type="range"
-            min={1.2}
-            max={2.6}
-            step={0.1}
-            value={style.lineSpacing}
-            onChange={(e) => onChange({ lineSpacing: Number(e.target.value) })}
-            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
-        </div>
 
-        {/* Letter Tightness / Spacing */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-400">Letter Spacing</span>
-            <span className="text-indigo-400 font-mono">
-              {(style.letterSpacing ?? 0) > 0 ? `+${style.letterSpacing}` : (style.letterSpacing ?? 0)}px
-            </span>
+          {/* Line Spacing */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Line Spacing</span>
+              <span className="text-indigo-400 font-mono font-medium">{style.lineSpacing.toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={1.2}
+              max={2.8}
+              step={0.1}
+              value={style.lineSpacing}
+              onChange={(e) => onChange({ lineSpacing: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
-          <input
-            type="range"
-            min={-3}
-            max={3}
-            step={0.5}
-            value={style.letterSpacing ?? 0}
-            onChange={(e) => onChange({ letterSpacing: Number(e.target.value) })}
-            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
-        </div>
 
-        {/* Word Spacing */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-400">Word Gap</span>
-            <span className="text-indigo-400 font-mono">{(style.wordSpacing ?? 1.0).toFixed(1)}×</span>
-          </div>
-          <input
-            type="range"
-            min={0.6}
-            max={1.8}
-            step={0.1}
-            value={style.wordSpacing ?? 1.0}
-            onChange={(e) => onChange({ wordSpacing: Number(e.target.value) })}
-            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
-        </div>
-      </div>
-
-      {/* Cursive & Messiness Personality Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
-        {/* Cursive Forward Slant */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-300 flex items-center gap-1.5">
-              <span>✍️ Cursive Slant</span>
-            </span>
-            <span className="text-indigo-400 font-mono text-[11px]">
-              {style.cursiveSlant ?? 8}°
-            </span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={18}
-            step={1}
-            value={style.cursiveSlant ?? 8}
-            onChange={(e) => onChange({ cursiveSlant: Number(e.target.value) })}
-            className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
-          <div className="flex justify-between text-[10px] text-slate-500">
-            <span>Upright (0°)</span>
-            <span>Natural (8°)</span>
-            <span>Rushed (18°)</span>
+          {/* Paragraph Indent */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Paragraph Indent</span>
+              <span className="text-indigo-400 font-mono font-medium">{style.paragraphIndent ?? 0}px</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={5}
+              value={style.paragraphIndent ?? 0}
+              onChange={(e) => onChange({ paragraphIndent: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
         </div>
 
-        {/* Messiness / Rushed Penmanship */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs">
-            <span className="font-medium text-slate-300 flex items-center gap-1.5">
-              <span>⚡ Messy / Rushed Flow</span>
-            </span>
-            <span className="text-amber-400 font-mono text-[11px]">
-              {(style.messiness ?? 1.0).toFixed(1)}×
-            </span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          {/* Paragraph Spacing */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Paragraph Gap</span>
+              <span className="text-indigo-400 font-mono font-medium">+{style.paragraphSpacing ?? 0} lines</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={3}
+              step={1}
+              value={style.paragraphSpacing ?? 0}
+              onChange={(e) => onChange({ paragraphSpacing: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
-          <input
-            type="range"
-            min={0.2}
-            max={2.0}
-            step={0.1}
-            value={style.messiness ?? 1.0}
-            onChange={(e) => onChange({ messiness: Number(e.target.value) })}
-            className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-          />
-          <div className="flex justify-between text-[10px] text-slate-500">
-            <span>Neat (0.2)</span>
-            <span>Natural (1.0)</span>
-            <span>Messy / Fast (2.0)</span>
+
+          {/* Section Spacing */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Section Gap</span>
+              <span className="text-indigo-400 font-mono font-medium">+{style.sectionSpacing ?? 0} lines</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={3}
+              step={1}
+              value={style.sectionSpacing ?? 0}
+              onChange={(e) => onChange({ sectionSpacing: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
+          </div>
+
+          {/* Word Gap */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Word Gap</span>
+              <span className="text-indigo-400 font-mono font-medium">{(style.wordSpacing ?? 1.0).toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={0.6}
+              max={1.8}
+              step={0.1}
+              value={style.wordSpacing ?? 1.0}
+              onChange={(e) => onChange({ wordSpacing: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
         </div>
       </div>
 
-      {/* Quick Handwriting Presets */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Quick Handwriting Presets</span>
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              const f = FONT_OPTIONS.find((opt) => opt.id === 'rushed-cursive') || FONT_OPTIONS[0];
-              onSelectProfile(null);
-              onChange({
-                usePersonalHandwriting: false,
-                fontFamily: f.fontFamily,
-                fontName: f.name,
-                cursiveSlant: 14,
-                messiness: 1.6,
-                letterSpacing: -1.0,
-                wordSpacing: 0.9,
-                variationIntensity: 1.4,
-                connectedCursive: true,
-              });
-            }}
-            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
-          >
-            ⚡ Rushed Notes
-          </button>
+      {/* 5. Page Margins (Top, Bottom, Side Margins) */}
+      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+        <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+          <MoveVertical className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Page Margins (Top, Bottom & Sides)</span>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const f = FONT_OPTIONS.find((opt) => opt.id === 'doctor-scrawl') || FONT_OPTIONS[0];
-              onSelectProfile(null);
-              onChange({
-                usePersonalHandwriting: false,
-                fontFamily: f.fontFamily,
-                fontName: f.name,
-                cursiveSlant: 16,
-                messiness: 1.8,
-                letterSpacing: -1.5,
-                wordSpacing: 0.85,
-                variationIntensity: 1.5,
-                connectedCursive: true,
-              });
-            }}
-            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
-          >
-            🩺 Doctor Scrawl
-          </button>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Top Margin */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-400">Top Margin</span>
+              <span className="text-indigo-400 font-mono">{style.marginTopMm}mm</span>
+            </div>
+            <input
+              type="range"
+              min={8}
+              max={45}
+              step={2}
+              value={style.marginTopMm}
+              onChange={(e) => onChange({ marginTopMm: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
+          </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const f = FONT_OPTIONS.find((opt) => opt.id === 'cedarville') || FONT_OPTIONS[0];
-              onSelectProfile(null);
-              onChange({
-                usePersonalHandwriting: false,
-                fontFamily: f.fontFamily,
-                fontName: f.name,
-                cursiveSlant: 9,
-                messiness: 1.1,
-                letterSpacing: -0.5,
-                wordSpacing: 1.0,
-                variationIntensity: 1.1,
-                connectedCursive: true,
-              });
-            }}
-            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
-          >
-            ✍️ Loose Cursive
-          </button>
+          {/* Bottom Margin */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-400">Bottom Margin</span>
+              <span className="text-indigo-400 font-mono">{style.marginBottomMm}mm</span>
+            </div>
+            <input
+              type="range"
+              min={8}
+              max={45}
+              step={2}
+              value={style.marginBottomMm}
+              onChange={(e) => onChange({ marginBottomMm: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
+          </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const f = FONT_OPTIONS.find((opt) => opt.id === 'kalam') || FONT_OPTIONS[0];
-              onSelectProfile(null);
-              onChange({
-                usePersonalHandwriting: false,
-                fontFamily: f.fontFamily,
-                fontName: f.name,
-                cursiveSlant: 5,
-                messiness: 0.8,
-                letterSpacing: 0,
-                wordSpacing: 1.1,
-                variationIntensity: 0.9,
-                connectedCursive: true,
-              });
-            }}
-            className="py-1.5 px-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-amber-500/40 text-[11px] font-medium transition text-left"
-          >
-            📝 Everyday Pen
-          </button>
+          {/* Left Margin */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-400">Left Margin</span>
+              <span className="text-indigo-400 font-mono">{style.marginLeftMm}mm</span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={50}
+              step={2}
+              value={style.marginLeftMm}
+              onChange={(e) => onChange({ marginLeftMm: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
+          </div>
+
+          {/* Right Margin */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-400">Right Margin</span>
+              <span className="text-indigo-400 font-mono">{style.marginRightMm}mm</span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={50}
+              step={2}
+              value={style.marginRightMm}
+              onChange={(e) => onChange({ marginRightMm: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+            />
+          </div>
         </div>
       </div>
 
-      {/* 5. Ink Colors & Highlighter Tools */}
+      {/* 6. Mobile & Camera Studio, Lighting & Shadows */}
+      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <span>Mobile Camera & Lighting Studio</span>
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-amber-300">
+            <input
+              type="checkbox"
+              checked={style.scannerLighting ?? false}
+              onChange={(e) => onChange({ scannerLighting: e.target.checked })}
+              className="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-amber-500"
+            />
+            <span>Enable Photo Lighting</span>
+          </label>
+        </div>
+
+        {/* Lighting Tone & Shadow Options */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Lighting Mood / Warmth */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] text-slate-400 flex items-center gap-1">
+              <Sun className="w-3 h-3 text-amber-400" />
+              <span>Lighting Mood / Tone</span>
+            </label>
+            <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[10px]">
+              {[
+                { id: 'neutral', label: 'Daylight' },
+                { id: 'warm-desk', label: '💡 Warm Lamp' },
+                { id: 'cool-office', label: '❄️ Cool Office' },
+                { id: 'dramatic-lamp', label: '🔦 Spotlight' },
+                { id: 'golden-sunset', label: '🌅 Golden Hour' },
+              ].map((tone) => (
+                <button
+                  key={tone.id}
+                  type="button"
+                  onClick={() => onChange({ cameraLightingTone: tone.id as CameraLightingTone, scannerLighting: true })}
+                  className={`py-1 px-1 rounded font-medium transition ${
+                    (style.cameraLightingTone || 'neutral') === tone.id
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  {tone.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Page Elevation / Shadow Depth */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] text-slate-400 flex items-center gap-1">
+              <Box className="w-3 h-3 text-indigo-400" />
+              <span>3D Page Shadow Depth</span>
+            </label>
+            <div className="grid grid-cols-4 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[10px]">
+              {[
+                { id: 'none', label: 'Flat' },
+                { id: 'subtle', label: 'Subtle' },
+                { id: 'floating', label: 'Floating' },
+                { id: 'deep', label: 'Deep 3D' },
+              ].map((shadow) => (
+                <button
+                  key={shadow.id}
+                  type="button"
+                  onClick={() => onChange({ cameraDeskShadow: shadow.id as PageShadowDepth })}
+                  className={`py-1 px-1 rounded font-medium transition ${
+                    (style.cameraDeskShadow || 'floating') === shadow.id
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  {shadow.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desk Surface & Extra Camera Details */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Desk Surface */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] text-slate-400">Desk Surface Material</label>
+            <div className="grid grid-cols-4 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[10px]">
+              {[
+                { id: 'none', label: 'Studio Dark' },
+                { id: 'oak-wood', label: '🪵 Oak' },
+                { id: 'dark-walnut', label: '🪵 Walnut' },
+                { id: 'marble', label: '🏛️ Marble' },
+              ].map((desk) => (
+                <button
+                  key={desk.id}
+                  type="button"
+                  onClick={() => onChange({ deskSurface: desk.id as DeskSurface })}
+                  className={`py-1 px-1 rounded font-medium transition ${
+                    (style.deskSurface || 'none') === desk.id
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  {desk.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Camera Extra Toggles */}
+          <div className="flex flex-col justify-end space-y-1.5 text-[11px] text-slate-300">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.cameraPhoneShadow ?? false}
+                onChange={(e) => onChange({ cameraPhoneShadow: e.target.checked, scannerLighting: true })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>📱 Smartphone Cast Shadow</span>
+            </label>
+
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={style.paperCreases ?? false}
+                onChange={(e) => onChange({ paperCreases: e.target.checked })}
+                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
+              />
+              <span>📄 Paper Fold & Crease Lines</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Ink Color & Highlighter Tools */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Ink Color */}
         <div className="space-y-2">
@@ -610,7 +718,6 @@ export const Controls: React.FC<ControlsProps> = ({
                 title={color.name}
               />
             ))}
-            {/* Custom color input */}
             <label
               className="w-7 h-7 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer hover:border-slate-400 transition"
               title="Custom ink color"
@@ -659,7 +766,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </div>
 
-      {/* 6. Sticky Notes Section */}
+      {/* 8. Sticky Notes Section */}
       <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/60 space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
@@ -683,9 +790,17 @@ export const Controls: React.FC<ControlsProps> = ({
                 key={note.id}
                 className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-300"
               >
-                <span className={`w-2 h-2 rounded-full ${
-                  note.color === 'pink' ? 'bg-pink-400' : note.color === 'cyan' ? 'bg-cyan-400' : note.color === 'green' ? 'bg-emerald-400' : 'bg-amber-400'
-                }`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    note.color === 'pink'
+                      ? 'bg-pink-400'
+                      : note.color === 'cyan'
+                      ? 'bg-cyan-400'
+                      : note.color === 'green'
+                      ? 'bg-emerald-400'
+                      : 'bg-amber-400'
+                  }`}
+                />
                 <span className="max-w-[120px] truncate">{note.text}</span>
                 <button
                   type="button"
@@ -698,7 +813,9 @@ export const Controls: React.FC<ControlsProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-[11px] text-slate-500">No sticky notes added. Click "+ Add Sticky Note" to pin margin notes or teacher marks.</p>
+          <p className="text-[11px] text-slate-500">
+            No sticky notes added. Click "+ Add Sticky Note" to pin margin notes or teacher marks.
+          </p>
         )}
 
         {/* Modal / Card to add sticky note */}
@@ -706,7 +823,11 @@ export const Controls: React.FC<ControlsProps> = ({
           <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 space-y-2 mt-2">
             <div className="flex justify-between items-center text-xs font-medium text-slate-300">
               <span>New Sticky Note</span>
-              <button type="button" onClick={() => setShowStickyModal(false)} className="text-slate-500 hover:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setShowStickyModal(false)}
+                className="text-slate-500 hover:text-slate-300"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -725,9 +846,17 @@ export const Controls: React.FC<ControlsProps> = ({
                     type="button"
                     onClick={() => setNewStickyColor(c)}
                     className={`w-5 h-5 rounded-full border transition ${
-                      newStickyColor === c ? 'scale-125 border-white' : 'border-transparent opacity-70 hover:opacity-100'
+                      newStickyColor === c
+                        ? 'scale-125 border-white'
+                        : 'border-transparent opacity-70 hover:opacity-100'
                     } ${
-                      c === 'pink' ? 'bg-pink-300' : c === 'cyan' ? 'bg-cyan-300' : c === 'green' ? 'bg-emerald-300' : 'bg-amber-300'
+                      c === 'pink'
+                        ? 'bg-pink-300'
+                        : c === 'cyan'
+                        ? 'bg-cyan-300'
+                        : c === 'green'
+                        ? 'bg-emerald-300'
+                        : 'bg-amber-300'
                     }`}
                   />
                 ))}
@@ -744,19 +873,19 @@ export const Controls: React.FC<ControlsProps> = ({
         )}
       </div>
 
-      {/* 7. Realistic Paper & Ink Physics Toggles */}
+      {/* 9. Realistic Handwriting Flow & Ink Physics */}
       <div className="pt-2 border-t border-slate-800/80 space-y-2 text-xs">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300">
             <input
               type="checkbox"
-              checked={style.scannerLighting ?? false}
-              onChange={(e) => onChange({ scannerLighting: e.target.checked })}
+              checked={style.subtleVariation}
+              onChange={(e) => onChange({ subtleVariation: e.target.checked })}
               className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600"
             />
             <span className="flex items-center gap-1">
-              <Camera className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Mobile Cam / Scanner Lighting</span>
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Organic Letter Jitter & Flow</span>
             </span>
           </label>
 
@@ -781,7 +910,7 @@ export const Controls: React.FC<ControlsProps> = ({
               onChange={(e) => onChange({ inkFade: e.target.checked })}
               className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
             />
-            <span>Ink Fade & Flow</span>
+            <span>Ink Fade Dynamics</span>
           </label>
 
           <label className="flex items-center gap-1.5 cursor-pointer select-none">
@@ -811,7 +940,7 @@ export const Controls: React.FC<ControlsProps> = ({
               onChange={(e) => onChange({ inkBleed: e.target.checked })}
               className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
             />
-            <span>Ink Bleed</span>
+            <span>Ink Bleed / Pressure</span>
           </label>
         </div>
       </div>

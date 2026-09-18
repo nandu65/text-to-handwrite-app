@@ -152,36 +152,56 @@ export function paginateText(
   const paragraphs = rawText.split('\n');
   const allWrappedLines: string[] = [];
 
-  for (const para of paragraphs) {
+  const paraIndentPx = style.paragraphIndent ?? 0;
+  const extraParaSpacing = style.paragraphSpacing ?? 0;
+  const extraSectionSpacing = style.sectionSpacing ?? 0;
+
+  for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+    const para = paragraphs[pIdx];
     if (para.trim() === '') {
       // Empty line / paragraph gap
       allWrappedLines.push('');
       continue;
     }
 
+    // Section spacing before headings or sections
+    const isSectionHeading = para.trim().startsWith('__') || para.trim().startsWith('#');
+    if (pIdx > 0 && isSectionHeading && extraSectionSpacing > 0) {
+      for (let s = 0; s < extraSectionSpacing; s++) {
+        allWrappedLines.push('');
+      }
+    }
+
     const words = para.split(' ');
     let currentLine = '';
+    let isFirstLineInPara = true;
 
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
       const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const availableWidth = isFirstLineInPara
+        ? layout.printableWidthPx - paraIndentPx
+        : layout.printableWidthPx;
+
       const testWidth = measureTextLineWidth(testLine, style, activeProfile);
 
-      if (testWidth <= layout.printableWidthPx) {
+      if (testWidth <= availableWidth) {
         currentLine = testLine;
       } else {
         if (currentLine) {
           allWrappedLines.push(currentLine);
           currentLine = word;
+          isFirstLineInPara = false;
         } else {
           // Word itself is wider than printable width -> break it up
           let partialWord = '';
           for (const char of word) {
-            if (measureTextLineWidth(partialWord + char, style, activeProfile) <= layout.printableWidthPx) {
+            if (measureTextLineWidth(partialWord + char, style, activeProfile) <= availableWidth) {
               partialWord += char;
             } else {
               allWrappedLines.push(partialWord);
               partialWord = char;
+              isFirstLineInPara = false;
             }
           }
           currentLine = partialWord;
@@ -191,6 +211,13 @@ export function paginateText(
 
     if (currentLine) {
       allWrappedLines.push(currentLine);
+    }
+
+    // Extra paragraph spacing after paragraph
+    if (extraParaSpacing > 0 && pIdx < paragraphs.length - 1 && para.trim() !== '') {
+      for (let ep = 0; ep < extraParaSpacing; ep++) {
+        allWrappedLines.push('');
+      }
     }
   }
 
