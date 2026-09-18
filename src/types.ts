@@ -220,6 +220,8 @@ export interface HandwritingStyle {
   cameraDeskShadow?: PageShadowDepth; // desk elevation shadow
   deskSurface?: DeskSurface; // desk material behind paper
   paperCreases?: boolean; // subtle center fold and corner creases
+  paperFoldingIntensity?: number; // 0 to 100% fold lever intensity
+  paperFoldType?: 'quad-cross' | 'tri-fold' | 'half-fold' | 'diagonal'; // authentic fold patterns
   highlighterColor?: HighlighterColor; // 'yellow' | 'cyan' | 'pink' | 'lime'
   inkColor: string;
   inkOpacity: number;
@@ -242,13 +244,14 @@ export interface HandwritingStyle {
 }
 
 export const INK_COLORS = [
-  { name: 'Dark Ink', value: '#1e293b' },
-  { name: 'Classic Blue', value: '#1e3a8a' },
-  { name: 'Royal Blue', value: '#1d4ed8' },
+  { name: 'Dark Slate', value: '#1e293b' },
+  { name: 'Navy Blue', value: '#1e3a8a' },
+  { name: 'Royal Blue', value: '#2563eb' },
   { name: 'Gel Black', value: '#09090b' },
-  { name: 'Fountain Brown', value: '#451a03' },
-  { name: 'Teacher Red', value: '#991b1b' },
-  { name: 'Emerald Green', value: '#065f46' },
+  { name: 'Fountain Brown', value: '#78350f' },
+  { name: 'Teacher Red', value: '#dc2626' },
+  { name: 'Emerald Green', value: '#047857' },
+  { name: 'Violet Pen', value: '#7c3aed' },
 ];
 
 export const HIGHLIGHTER_COLORS: Record<HighlighterColor, { name: string; bg: string; border: string }> = {

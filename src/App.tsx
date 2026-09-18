@@ -88,8 +88,10 @@ export function App() {
     cameraPhoneShadow: false,
     deskSurface: 'none',
     paperCreases: false,
+    paperFoldingIntensity: 0,
+    paperFoldType: 'quad-cross',
     highlighterColor: 'yellow',
-    inkColor: INK_COLORS[0].value, // Dark Ink
+    inkColor: INK_COLORS[0].value, // Dark Slate
     inkOpacity: 0.95,
     paperType: 'ruled',
     pageSize: 'A4',

@@ -318,16 +318,37 @@ const tintCache = new Map<string, string>();
  */
 export function getTintedGlyphUrl(originalDataUrl: string, inkColor: string): string {
   if (!originalDataUrl) return originalDataUrl;
-  // If inkColor is default dark slate, original data URL is already optimized
-  if (inkColor === '#0f172a' || inkColor === '#1e293b' || inkColor === '#000000') {
+  if (!inkColor || inkColor === '#0f172a' || inkColor === '#1e293b' || inkColor === '#000000') {
     return originalDataUrl;
   }
 
-  const cacheKey = `${originalDataUrl}_${inkColor}`;
+  const cacheKey = `${originalDataUrl.slice(0, 40)}_${originalDataUrl.length}_${inkColor}`;
   if (tintCache.has(cacheKey)) {
     return tintCache.get(cacheKey)!;
   }
 
-  // Tint in memory synchronously if possible or return original
+  // Pre-tint synchronously with an Image + Canvas if possible
+  try {
+    const img = new Image();
+    img.src = originalDataUrl;
+    if (img.complete && img.naturalWidth > 0) {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.fillStyle = inkColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const tintedUrl = canvas.toDataURL('image/png');
+        tintCache.set(cacheKey, tintedUrl);
+        return tintedUrl;
+      }
+    }
+  } catch (err) {
+    // fallback to originalDataUrl
+  }
+
   return originalDataUrl;
 }

@@ -35,6 +35,8 @@ import {
   MoveVertical,
   Sun,
   Box,
+  FoldHorizontal,
+  Check,
 } from 'lucide-react';
 
 interface ControlsProps {
@@ -652,71 +654,142 @@ export const Controls: React.FC<ControlsProps> = ({
               />
               <span>📱 Smartphone Cast Shadow</span>
             </label>
-
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={style.paperCreases ?? false}
-                onChange={(e) => onChange({ paperCreases: e.target.checked })}
-                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
-              />
-              <span>📄 Paper Fold & Crease Lines</span>
-            </label>
           </div>
         </div>
       </div>
 
-      {/* 7. Ink Color & Highlighter Tools */}
+      {/* 7. Dedicated Paper Folding & Creases Studio (Intensity Lever) */}
+      <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/60 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <FoldHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+            <span>📄 Paper Folding & Crease Studio</span>
+          </div>
+          <span className="text-[11px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            {(style.paperFoldingIntensity ?? (style.paperCreases ? 50 : 0))}% Intensity
+          </span>
+        </div>
+
+        {/* Folding Intensity Slider / Lever */}
+        <div className="space-y-1.5 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
+          <div className="flex items-center justify-between text-[10.5px] text-slate-400">
+            <span>Flat (0%)</span>
+            <span>Subtle Crease</span>
+            <span>Deep 3D Fold (100%)</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={2}
+            value={style.paperFoldingIntensity ?? (style.paperCreases ? 50 : 0)}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              onChange({
+                paperFoldingIntensity: val,
+                paperCreases: val > 0,
+              });
+            }}
+            className="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+            title="Adjust paper fold crease depth"
+          />
+        </div>
+
+        {/* Fold Crease Styles */}
+        <div className="space-y-1">
+          <label className="text-[10.5px] text-slate-400">Crease Pattern</label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { id: 'quad-cross', label: '⊞ Cross Fold' },
+              { id: 'tri-fold', label: '⊟ Tri-Fold' },
+              { id: 'half-fold', label: '◫ Half Fold' },
+              { id: 'diagonal', label: '⧄ Diagonal' },
+            ].map((fold) => {
+              const currentIntensity = style.paperFoldingIntensity ?? (style.paperCreases ? 50 : 0);
+              const isSelected = (style.paperFoldType || 'quad-cross') === fold.id && currentIntensity > 0;
+              return (
+                <button
+                  key={fold.id}
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      paperFoldType: fold.id as any,
+                      paperCreases: true,
+                      paperFoldingIntensity: currentIntensity > 0 ? currentIntensity : 55,
+                    })
+                  }
+                  className={`py-1.5 px-1 rounded-lg border text-[10.5px] font-medium transition flex items-center justify-center ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-600 text-white font-bold shadow-xs'
+                      : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  {fold.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 8. Ink Color (Pen Color) & Highlighter Tools */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Ink Color */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-400 flex items-center justify-between">
+        <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+          <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <Palette className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Ink Color</span>
+              <span>Pen Ink Color</span>
             </span>
-            <span className="text-[11px] font-mono text-slate-400">{style.inkColor}</span>
+            <span className="text-[11px] font-mono text-indigo-300 font-bold px-1.5 py-0.2 rounded bg-indigo-500/10 border border-indigo-500/30">
+              {style.inkColor}
+            </span>
           </label>
-          <div className="flex items-center gap-2 flex-wrap">
-            {INK_COLORS.map((color) => (
-              <button
-                key={color.value}
-                type="button"
-                onClick={() => onChange({ inkColor: color.value })}
-                className={`w-7 h-7 rounded-full border-2 transition-transform ${
-                  style.inkColor === color.value
-                    ? 'border-indigo-400 scale-110 shadow-md ring-2 ring-indigo-500/30'
-                    : 'border-slate-700 hover:scale-105'
-                }`}
-                style={{ backgroundColor: color.value }}
-                title={color.name}
-              />
-            ))}
+          <div className="flex items-center gap-2 flex-wrap pt-0.5">
+            {INK_COLORS.map((color) => {
+              const isSelected = style.inkColor?.toLowerCase() === color.value.toLowerCase();
+              return (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => onChange({ inkColor: color.value })}
+                  className={`w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center relative ${
+                    isSelected
+                      ? 'border-white scale-115 shadow-lg ring-2 ring-indigo-500'
+                      : 'border-slate-700 hover:scale-105 opacity-85 hover:opacity-100'
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  title={`${color.name} (${color.value})`}
+                >
+                  {isSelected && <Check className="w-3.5 h-3.5 text-white drop-shadow-md" />}
+                </button>
+              );
+            })}
             <label
-              className="w-7 h-7 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center cursor-pointer hover:border-slate-400 transition"
-              title="Custom ink color"
+              className="w-7 h-7 rounded-full border-2 border-dashed border-slate-500 flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-slate-800 transition"
+              title="Custom pen color"
             >
               <input
                 type="color"
                 value={style.inkColor}
                 onChange={(e) => onChange({ inkColor: e.target.value })}
-                className="opacity-0 w-0 h-0"
+                className="opacity-0 w-0 h-0 absolute"
               />
-              <span className="text-[10px] text-slate-400 font-bold">+</span>
+              <span className="text-[11px] text-slate-300 font-bold">+</span>
             </label>
           </div>
         </div>
 
         {/* Highlighter Color Picker */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-400 flex items-center justify-between">
+        <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+          <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <Highlighter className="w-3.5 h-3.5 text-amber-400" />
               <span>Highlighter Stroke</span>
             </span>
-            <span className="text-[11px] text-slate-400">==syntax==</span>
+            <span className="text-[11px] font-mono text-slate-400">==syntax==</span>
           </label>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 gap-1.5 pt-0.5">
             {(Object.keys(HIGHLIGHTER_COLORS) as HighlighterColor[]).map((hColor) => {
               const info = HIGHLIGHTER_COLORS[hColor];
               const isSelected = (style.highlighterColor || 'yellow') === hColor;

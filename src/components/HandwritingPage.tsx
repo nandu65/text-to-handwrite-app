@@ -108,8 +108,54 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
         {/* Smartphone silhouette cast shadow */}
         {style.cameraPhoneShadow && <div className="phone-cast-shadow" />}
 
-        {/* Paper Creases / Folds */}
-        {style.paperCreases && <div className="paper-creases" />}
+        {/* Dynamic Realistic Paper Folding & Crease Physics */}
+        {(() => {
+          const intensity = (style.paperFoldingIntensity ?? (style.paperCreases ? 50 : 0)) / 100;
+          if (intensity <= 0) return null;
+          const foldType = style.paperFoldType || 'quad-cross';
+
+          return (
+            <>
+              {/* Fold Crease Valley Shadow */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  zIndex: 22,
+                  mixBlendMode: 'multiply',
+                  background:
+                    foldType === 'quad-cross'
+                      ? `linear-gradient(to bottom, transparent 49.1%, rgba(15,23,42,${0.35 * intensity}) 49.6%, rgba(0,0,0,${0.85 * intensity}) 50%, rgba(15,23,42,${0.30 * intensity}) 50.4%, transparent 50.9%),
+                         linear-gradient(to right, transparent 49.1%, rgba(15,23,42,${0.35 * intensity}) 49.6%, rgba(0,0,0,${0.80 * intensity}) 50%, rgba(15,23,42,${0.30 * intensity}) 50.4%, transparent 50.9%)`
+                      : foldType === 'tri-fold'
+                      ? `linear-gradient(to bottom, transparent 32.5%, rgba(0,0,0,${0.80 * intensity}) 33.3%, transparent 34.1%),
+                         linear-gradient(to bottom, transparent 65.8%, rgba(0,0,0,${0.80 * intensity}) 66.6%, transparent 67.4%)`
+                      : foldType === 'half-fold'
+                      ? `linear-gradient(to bottom, transparent 49.1%, rgba(0,0,0,${0.85 * intensity}) 50%, transparent 50.9%)`
+                      : `linear-gradient(135deg, transparent 49.1%, rgba(0,0,0,${0.80 * intensity}) 50%, transparent 50.9%)`,
+                }}
+              />
+
+              {/* Fold Ridge Specular Highlight */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  zIndex: 23,
+                  mixBlendMode: 'screen',
+                  background:
+                    foldType === 'quad-cross'
+                      ? `linear-gradient(to bottom, transparent 49.7%, rgba(255,255,255,${0.90 * intensity}) 50.15%, transparent 50.6%),
+                         linear-gradient(to right, transparent 49.7%, rgba(255,255,255,${0.85 * intensity}) 50.15%, transparent 50.6%)`
+                      : foldType === 'tri-fold'
+                      ? `linear-gradient(to bottom, transparent 33.1%, rgba(255,255,255,${0.85 * intensity}) 33.5%, transparent 33.9%),
+                         linear-gradient(to bottom, transparent 66.4%, rgba(255,255,255,${0.85 * intensity}) 66.8%, transparent 67.2%)`
+                      : foldType === 'half-fold'
+                      ? `linear-gradient(to bottom, transparent 49.7%, rgba(255,255,255,${0.90 * intensity}) 50.2%, transparent 50.6%)`
+                      : `linear-gradient(135deg, transparent 49.7%, rgba(255,255,255,${0.85 * intensity}) 50.2%, transparent 50.6%)`,
+                }}
+              />
+            </>
+          );
+        })()}
 
         {/* 1. Spiral Notebook Rings along Left Edge */}
         {style.edgeStyle === 'spiral' && (
@@ -376,30 +422,39 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                             wordData.chars.map((charData) => {
                               if (charData.isPersonalGlyph && charData.glyphDataUrl) {
                                 return (
-                                  <span key={charData.key} style={{ ...charData.style, backgroundColor: 'transparent', flexShrink: 0 }} className="inline-flex items-baseline bg-transparent shrink-0">
-                                    <img
-                                      src={charData.glyphDataUrl}
-                                      alt={charData.char}
-                                      draggable={false}
-                                      style={{
-                                        width: `${charData.glyphWidthPx || style.fontSize}px`,
-                                        height: `${charData.glyphHeightPx || style.fontSize}px`,
-                                        objectFit: 'contain',
-                                        display: 'inline-block',
-                                        verticalAlign: 'baseline',
-                                        pointerEvents: 'none',
-                                        backgroundColor: 'transparent',
-                                        border: 'none',
-                                        boxShadow: 'none',
-                                        flexShrink: 0,
-                                      }}
-                                    />
-                                  </span>
+                                  <span
+                                    key={charData.key}
+                                    style={{
+                                      ...charData.style,
+                                      display: 'inline-block',
+                                      width: `${charData.glyphWidthPx || style.fontSize}px`,
+                                      height: `${charData.glyphHeightPx || style.fontSize}px`,
+                                      backgroundColor: style.inkColor,
+                                      WebkitMaskImage: `url(${charData.glyphDataUrl})`,
+                                      maskImage: `url(${charData.glyphDataUrl})`,
+                                      WebkitMaskSize: 'contain',
+                                      maskSize: 'contain',
+                                      WebkitMaskRepeat: 'no-repeat',
+                                      maskRepeat: 'no-repeat',
+                                      WebkitMaskPosition: 'center bottom',
+                                      maskPosition: 'center bottom',
+                                      flexShrink: 0,
+                                    }}
+                                    className="shrink-0"
+                                  />
                                 );
                               }
 
                               return (
-                                <span key={charData.key} style={{ ...charData.style, flexShrink: 0 }} className="shrink-0">
+                                <span
+                                  key={charData.key}
+                                  style={{
+                                    ...charData.style,
+                                    color: style.inkColor,
+                                    flexShrink: 0,
+                                  }}
+                                  className="shrink-0"
+                                >
                                   {charData.char}
                                 </span>
                               );
