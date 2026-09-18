@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Edit3,
@@ -9,122 +9,165 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  CheckCircle2,
-  HelpCircle,
   Type,
   Layers,
-  Palette,
+  MoveVertical,
+  HelpCircle,
+  CheckCircle2,
+  Compass,
 } from 'lucide-react';
 
 export interface TourStep {
+  id: string;
+  targetId: string;
   title: string;
   badge: string;
   icon: React.ReactNode;
   description: string;
   tips: string[];
   example?: string;
-  highlightCategory?: 'editor' | 'profile' | 'controls' | 'camera' | 'preview' | 'export';
+  preferredPlacement?: 'right' | 'left' | 'top' | 'bottom';
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: 'Welcome to Handwrite Studio!',
-    badge: 'Overview',
-    icon: <Sparkles className="w-6 h-6 text-amber-400" />,
+    id: 'editor',
+    targetId: 'tour-text-editor',
+    title: 'Text Input & Sample Prompts',
+    badge: 'Step 1: Editor',
+    icon: <Edit3 className="w-5 h-5 text-indigo-400" />,
     description:
-      'Transform any digital text into authentic, natural human handwriting on real paper textures with physics-based ink flow, spiral binding, and camera lighting.',
+      'Type or paste your text here. It automatically formats and live-renders into authentic handwriting on the notebook paper to the right.',
     tips: [
-      'Write or paste notes on the left, see live handwritten paper on the right.',
-      'Export multi-page documents to ultra-crisp PNG or PDF anytime.',
-      'Create and use your own physical handwriting using calibration sheets.',
+      'Click "Letters Test", "Essay", "Letter", or "Notes" for instant samples.',
+      'Supports paragraphs, headings, bullet lists, and math symbols.',
     ],
-    highlightCategory: 'editor',
+    preferredPlacement: 'right',
   },
   {
-    title: '✏️ Organic Scribbles & Human Mistake Syntax',
-    badge: 'Scribbles & Marks',
-    icon: <Edit3 className="w-6 h-6 text-indigo-400" />,
+    id: 'scribble-syntax',
+    targetId: 'tour-scribble-guide',
+    title: '✏️ Organic Scribbles & Mistake Syntax',
+    badge: 'Step 2: Human Scribbles',
+    icon: <Sparkles className="w-5 h-5 text-amber-400" />,
     description:
-      'Make your notes look realistically human with authentic scratch-outs, fluorescent highlighters, circled notes, wavy underlines, and checkboxes.',
+      'Render realistic hand-drawn mistakes, highlights, circle loops, and checkboxes using simple markdown syntax.',
     tips: [
       '~~mistake~~ ➔ Realistic pen scribble strike-through',
       '==important== ➔ Translucent fluorescent highlighter stroke',
-      '((key point)) ➔ Hand-drawn pen circle loop',
+      '((key phrase)) ➔ Hand-drawn wobbly pen circle loop',
       '__heading__ ➔ Hand-drawn wavy underline',
-      '[x] and [ ] ➔ Hand-drawn checked & unchecked boxes',
+      '[x] and [ ] ➔ Handwritten checked & unchecked boxes',
       '-> and => ➔ Handwritten arrows',
     ],
-    example: '__Chapter 1: Biology__\n-> Cells produce ==ATP energy==.\n-> Glycolysis is ~~aerobic~~ ((anaerobic)).\n[x] Completed Homework',
-    highlightCategory: 'editor',
+    example: '~~error~~ ==key concept== ((circle this)) __title__ [x] Done -> Next',
+    preferredPlacement: 'bottom',
   },
   {
-    title: '🌟 Create & Use Your Own Handwriting',
-    badge: 'Custom Font',
-    icon: <Type className="w-6 h-6 text-emerald-400" />,
+    id: 'create-handwriting',
+    targetId: 'tour-create-handwriting',
+    title: '🌟 Create My Handwriting Font',
+    badge: 'Step 3: Personal Handwriting',
+    icon: <Type className="w-5 h-5 text-emerald-400" />,
     description:
-      'Turn your own personal handwriting into a digital font! Print a calibration template, write your alphabet, take a photo, and our vision engine extracts transparent ink glyphs.',
+      'Turn your own personal physical handwriting into a digital font with zero background boxes!',
     tips: [
-      'Click "Create My Handwriting" in the top bar.',
-      'Download & write the A-Z sample sheet, then upload a photo.',
-      'Our engine automatically extracts transparent vector glyphs with zero white background boxes.',
-      'Switch between built-in cursive fonts and your personal profiles in one click.',
+      'Download the printable A-Z handwriting template sheet.',
+      'Write your alphabet with your favourite pen and snap a photo.',
+      'Upload the sheet, and our vision engine extracts transparent ink glyphs.',
+      'Use your custom handwriting across all generated pages and PDF exports!',
     ],
-    highlightCategory: 'profile',
+    preferredPlacement: 'bottom',
   },
   {
-    title: '📄 Authentic Paper Textures & Spiral Binding',
-    badge: 'Paper Styles',
-    icon: <Scroll className="w-6 h-6 text-amber-400" />,
+    id: 'paper-controls',
+    targetId: 'tour-paper-controls',
+    title: '📄 Paper Textures & Spiral Binding',
+    badge: 'Step 4: Paper Realism',
+    icon: <Scroll className="w-5 h-5 text-amber-400" />,
     description:
-      'Select authentic paper textures and edge bindings for homework, assignments, and vintage journals.',
+      'Choose authentic physical paper textures and notebook edge bindings.',
     tips: [
       'Textures: Crisp White Notebook, Warm Cream, Aged Parchment, or Recycled Kraft.',
-      'Edge Bindings: Realistic 3D metallic spiral notebook rings or 3-hole binder punches.',
-      'Paper Grids: Ruled lined paper with soft red margin lines, blank paper, or engineering graph grid.',
+      'Edge Bindings: 3D metallic wire spiral rings or 3-hole binder punches.',
+      'Paper Types: Lined ruled paper with red margins, blank paper, or graph grid.',
     ],
-    highlightCategory: 'controls',
+    preferredPlacement: 'right',
   },
   {
-    title: '📐 Fine Spacing, Indent & Page Margins',
-    badge: 'Typography',
-    icon: <Layers className="w-6 h-6 text-blue-400" />,
+    id: 'typography-controls',
+    targetId: 'tour-typography-controls',
+    title: '📐 Typography, Indent & Spacing',
+    badge: 'Step 5: Layout & Flow',
+    icon: <Layers className="w-5 h-5 text-blue-400" />,
     description:
-      'Control every geometric dimension of your document to match real physical paper.',
+      'Fine-tune the geometry of your writing to look naturally spaced and authentic.',
     tips: [
-      'Font Size & Line Spacing: Fine-tune character scale and line height.',
-      'Paragraph Indent & Spacing: Add custom first-line tab indents and paragraph gaps.',
-      'Page Margins: Independently adjust Top, Bottom, Left, and Right margins in millimeters.',
-      'Word Gap & Slant: Adjust natural word spacing and forward cursive tilt.',
+      'Font Size & Line Height: Calibrate handwriting scale and ruling alignment.',
+      'Paragraph Indent: Set custom first-line tab indentation.',
+      'Paragraph & Section Gaps: Control vertical gaps between thoughts and headings.',
+      'Word Gap: Adjust natural word spacing multiplier.',
     ],
-    highlightCategory: 'controls',
+    preferredPlacement: 'right',
   },
   {
-    title: '📸 Mobile Camera & Desk Lighting Studio',
-    badge: 'Realistic Lighting',
-    icon: <Camera className="w-6 h-6 text-violet-400" />,
+    id: 'margins-controls',
+    targetId: 'tour-margins-controls',
+    title: '📏 Precise Page Margins',
+    badge: 'Step 6: Margins',
+    icon: <MoveVertical className="w-5 h-5 text-indigo-400" />,
     description:
-      'Give your pages the look of a physical photo taken on a study desk with a smartphone.',
+      'Adjust physical margins with millimeter precision.',
     tips: [
-      'Lighting Moods: Warm Study Lamp, Cool Office, Spotlight, or Golden Hour Sunset.',
-      '📱 Smartphone Shadow: Casts a subtle silhouette of a phone and hand over the page.',
+      'Independently control Top, Bottom, Left, and Right margins.',
+      'Text automatically wraps cleanly within your margin boundaries with zero edge overflow.',
+    ],
+    preferredPlacement: 'right',
+  },
+  {
+    id: 'camera-studio',
+    targetId: 'tour-camera-studio',
+    title: '📸 Mobile Camera & Desk Studio',
+    badge: 'Step 7: Lighting Studio',
+    icon: <Camera className="w-5 h-5 text-violet-400" />,
+    description:
+      'Give your generated pages the authentic look of a smartphone photo taken on a physical desk.',
+    tips: [
+      'Lighting Moods: 💡 Warm Study Lamp, ❄️ Cool Office, 🔦 Spotlight, 🌅 Golden Hour.',
+      '📱 Smartphone Shadow: Realistic phone silhouette cast over the top corner.',
       '3D Desk Shadow: Choose Flat, Subtle, Floating 3D, or Deep Dramatic elevation.',
       '🪵 Desk Surfaces: Preview on Oak Wood, Dark Walnut, or White Marble countertops.',
     ],
-    highlightCategory: 'camera',
+    preferredPlacement: 'right',
   },
   {
-    title: '🖱️ Direct On-Page Click-to-Edit & Export',
-    badge: 'Interactive Canvas',
-    icon: <MousePointer className="w-6 h-6 text-rose-400" />,
+    id: 'paper-preview',
+    targetId: 'tour-paper-preview',
+    title: '🖱️ Live Paper & Click-to-Edit',
+    badge: 'Step 8: Interactive Canvas',
+    icon: <MousePointer className="w-5 h-5 text-rose-400" />,
     description:
-      'Edit text directly on the rendered paper canvas and download your completed assignments with one click.',
+      'Preview your handwritten document in real-time with full interactive features.',
     tips: [
-      'Click any line of text on the paper to open an instant in-place editor.',
-      'Hit Enter to save and instantly re-render the page.',
-      'Pin custom handwritten Sticky Notes to margins or corrections.',
-      'Click "Export PNG" or "Export PDF" in the header to download high-resolution multi-page files.',
+      'Click directly on any line of text on the paper to edit text in place.',
+      'Pin custom handwritten Sticky Notes to margins.',
+      'Zoom in/out and Fit-to-Screen controls at top right.',
     ],
-    highlightCategory: 'export',
+    preferredPlacement: 'left',
+  },
+  {
+    id: 'export-buttons',
+    targetId: 'tour-export-buttons',
+    title: '📥 Ultra-Crisp Export (PNG & PDF)',
+    badge: 'Step 9: Export',
+    icon: <Download className="w-5 h-5 text-emerald-400" />,
+    description:
+      'Download your final handwritten assignments with crystal-clear print resolution.',
+    tips: [
+      'Export PNG: Download ultra-high resolution image files of every page.',
+      'Export PDF: Generate a multi-page, print-ready document in A4, A5, or Letter sizes.',
+    ],
+    preferredPlacement: 'bottom',
   },
 ];
 
@@ -135,11 +178,43 @@ interface GuidedTourProps {
 
 export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const step = TOUR_STEPS[currentStep];
+  const isLast = currentStep === TOUR_STEPS.length - 1;
+
+  // Locate target element and compute spotlight rectangle
+  const updateTargetPosition = () => {
+    if (!isOpen || !step) return;
+    const el = document.getElementById(step.targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      const rect = el.getBoundingClientRect();
+      setTargetRect(rect);
+    } else {
+      setTargetRect(null);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(updateTargetPosition, 100);
+      window.addEventListener('resize', updateTargetPosition);
+      window.addEventListener('scroll', updateTargetPosition, true);
+
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('resize', updateTargetPosition);
+        window.removeEventListener('scroll', updateTargetPosition, true);
+      };
+    }
+  }, [isOpen, currentStep]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleSkip();
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
     };
@@ -149,13 +224,9 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const step = TOUR_STEPS[currentStep];
-  const isLast = currentStep === TOUR_STEPS.length - 1;
-
   const handleNext = () => {
     if (isLast) {
-      localStorage.setItem('handwrite_studio_tour_completed', 'true');
-      onClose();
+      handleSkip();
     } else {
       setCurrentStep((prev) => prev + 1);
     }
@@ -165,34 +236,110 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
     setCurrentStep((prev) => Math.max(0, prev - 1));
   };
 
-  const handleComplete = () => {
+  const handleSkip = () => {
     localStorage.setItem('handwrite_studio_tour_completed', 'true');
     onClose();
   };
 
+  // Compute Popover Position relative to Target Rect
+  const getPopoverStyle = (): React.CSSProperties => {
+    if (!targetRect) {
+      return {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 60,
+      };
+    }
+
+    const margin = 16;
+    const popoverWidth = 420;
+    const placement = step.preferredPlacement || 'bottom';
+
+    let top = targetRect.bottom + margin;
+    let left = targetRect.left;
+
+    if (placement === 'bottom') {
+      top = targetRect.bottom + margin;
+      left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, targetRect.left));
+    } else if (placement === 'right') {
+      top = Math.max(16, Math.min(window.innerHeight - 380, targetRect.top));
+      left = targetRect.right + margin;
+      // If right overflows screen, flip to left
+      if (left + popoverWidth > window.innerWidth - 16) {
+        left = Math.max(16, targetRect.left - popoverWidth - margin);
+      }
+    } else if (placement === 'left') {
+      top = Math.max(16, Math.min(window.innerHeight - 380, targetRect.top));
+      left = Math.max(16, targetRect.left - popoverWidth - margin);
+    } else if (placement === 'top') {
+      top = Math.max(16, targetRect.top - 380 - margin);
+      left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, targetRect.left));
+    }
+
+    // Ensure within viewport
+    top = Math.max(16, Math.min(window.innerHeight - 420, top));
+    left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, left));
+
+    return {
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${popoverWidth}px`,
+      zIndex: 60,
+    };
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-slate-900 border border-indigo-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        {/* Header with progress */}
-        <div className="px-6 pt-5 pb-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+    <div className="fixed inset-0 z-50 pointer-events-auto overflow-hidden animate-in fade-in duration-200">
+      {/* 1. Dark Backdrop Overlay */}
+      <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px] transition-all duration-300" />
+
+      {/* 2. Target Spotlight Highlight Border & Pulse */}
+      {targetRect && (
+        <div
+          className="absolute pointer-events-none transition-all duration-300 rounded-xl"
+          style={{
+            top: `${targetRect.top - 6}px`,
+            left: `${targetRect.left - 6}px`,
+            width: `${targetRect.width + 12}px`,
+            height: `${targetRect.height + 12}px`,
+            boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.75), 0 0 25px rgba(99, 102, 241, 0.8), inset 0 0 15px rgba(99, 102, 241, 0.4)',
+            border: '2px solid #818cf8',
+            zIndex: 55,
+          }}
+        >
+          {/* Animated Neon Pulse Ping */}
+          <div className="absolute -inset-1 rounded-xl border-2 border-indigo-400 opacity-60 animate-ping" />
+        </div>
+      )}
+
+      {/* 3. Interactive Floating Tooltip Popover */}
+      <div
+        ref={popoverRef}
+        style={getPopoverStyle()}
+        className="bg-slate-900 border border-indigo-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-200"
+      >
+        {/* Popover Header */}
+        <div className="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-              Interactive Guide • Step {currentStep + 1} of {TOUR_STEPS.length}
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+              Interactive Tour • {currentStep + 1} of {TOUR_STEPS.length}
             </span>
           </div>
 
           <button
             type="button"
-            onClick={handleComplete}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-            title="Close Tour"
+            onClick={handleSkip}
+            className="text-[11px] text-slate-400 hover:text-slate-200 font-medium px-2 py-0.5 rounded hover:bg-slate-800 transition"
           >
-            <X className="w-4 h-4" />
+            Skip Tour ✕
           </button>
         </div>
 
-        {/* Step Progress Bar */}
+        {/* Progress Bar */}
         <div className="w-full bg-slate-800 h-1">
           <div
             className="bg-gradient-to-r from-indigo-500 via-violet-500 to-amber-400 h-full transition-all duration-300"
@@ -200,64 +347,54 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
           />
         </div>
 
-        {/* Body Content */}
-        <div className="p-6 space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center shrink-0 shadow-inner">
+        {/* Popover Content */}
+        <div className="p-5 space-y-3.5 max-h-[360px] overflow-y-auto">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-500/40 flex items-center justify-center shrink-0 shadow-inner">
               {step.icon}
             </div>
 
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <div className="space-y-0.5">
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 {step.badge}
               </span>
-              <h2 className="text-lg font-bold text-white tracking-tight">{step.title}</h2>
+              <h3 className="text-sm font-bold text-white tracking-tight">{step.title}</h3>
               <p className="text-xs text-slate-300 leading-relaxed">{step.description}</p>
             </div>
           </div>
 
           {/* Tips List */}
-          <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              💡 Key Highlights & Capabilities
-            </span>
-            <ul className="space-y-1.5 text-xs text-slate-300">
-              {step.tips.map((tip, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1.5 text-[11px] text-slate-300">
+            {step.tips.map((tip, idx) => (
+              <div key={idx} className="flex items-start gap-1.5">
+                <span className="text-emerald-400 font-bold">✓</span>
+                <span>{tip}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Optional Code Example */}
+          {/* Example Code */}
           {step.example && (
-            <div className="bg-slate-950 p-3 rounded-xl border border-amber-500/30 space-y-1">
-              <span className="text-[10px] font-mono font-semibold text-amber-400 uppercase">
-                Example Live Syntax:
-              </span>
-              <pre className="text-[11px] font-mono text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-900/80 p-2 rounded border border-slate-800">
-                {step.example}
-              </pre>
+            <div className="p-2.5 bg-slate-950 rounded-lg border border-amber-500/30 text-[11px] font-mono text-amber-300 whitespace-pre-wrap">
+              {step.example}
             </div>
           )}
         </div>
 
-        {/* Footer Navigation */}
-        <div className="px-6 py-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+        {/* Popover Navigation Footer */}
+        <div className="px-5 py-3 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between">
           <button
             type="button"
             onClick={handlePrev}
             disabled={currentStep === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
             <span>Previous</span>
           </button>
 
-          {/* Progress dots */}
-          <div className="flex items-center gap-1.5">
+          {/* Step indicator dots */}
+          <div className="flex items-center gap-1">
             {TOUR_STEPS.map((_, idx) => (
               <button
                 key={idx}
@@ -265,7 +402,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
                 onClick={() => setCurrentStep(idx)}
                 className={`h-1.5 rounded-full transition-all ${
                   idx === currentStep
-                    ? 'w-6 bg-indigo-500'
+                    ? 'w-4 bg-indigo-400'
                     : 'w-1.5 bg-slate-700 hover:bg-slate-500'
                 }`}
               />
@@ -275,10 +412,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={handleNext}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-md shadow-indigo-600/30 transition active:scale-95"
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition active:scale-95"
           >
-            <span>{isLast ? 'Get Started 🚀' : 'Next Step'}</span>
-            {!isLast && <ChevronRight className="w-4 h-4" />}
+            <span>{isLast ? 'Finish Guide 🎉' : 'Next'}</span>
+            {!isLast && <ChevronRight className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>

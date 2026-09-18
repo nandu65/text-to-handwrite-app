@@ -52,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Create My Handwriting feature button */}
         <button
+          id="tour-create-handwriting"
           onClick={onOpenCreateHandwriting}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold hover:bg-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
         >
@@ -66,27 +67,30 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="h-5 w-[1px] bg-slate-800 hidden sm:block" />
 
-        {/* Export PNG */}
-        <button
-          onClick={onExportPNG}
-          disabled={isExporting}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition shadow-sm active:scale-95 disabled:opacity-50"
-          title={`Export ${pageCount} ${pageCount === 1 ? 'page' : 'pages'} as PNG`}
-        >
-          <Image className="w-4 h-4 text-emerald-400" />
-          <span className="hidden sm:inline">Export PNG</span>
-        </button>
+        {/* Export Buttons Group */}
+        <div id="tour-export-buttons" className="flex items-center gap-2">
+          {/* Export PNG */}
+          <button
+            onClick={onExportPNG}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition shadow-sm active:scale-95 disabled:opacity-50"
+            title={`Export ${pageCount} ${pageCount === 1 ? 'page' : 'pages'} as PNG`}
+          >
+            <Image className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline">Export PNG</span>
+          </button>
 
-        {/* Export PDF */}
-        <button
-          onClick={onExportPDF}
-          disabled={isExporting}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/30 transition active:scale-95 disabled:opacity-50"
-          title={`Export as physical PDF`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>{isExporting ? 'Generating...' : 'Export PDF'}</span>
-        </button>
+          {/* Export PDF */}
+          <button
+            onClick={onExportPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/30 transition active:scale-95 disabled:opacity-50"
+            title={`Export as physical PDF`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>{isExporting ? 'Generating...' : 'Export PDF'}</span>
+          </button>
+        </div>
       </div>
     </header>
   );

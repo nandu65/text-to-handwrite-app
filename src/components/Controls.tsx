@@ -102,6 +102,7 @@ export const Controls: React.FC<ControlsProps> = ({
         <div className="flex items-center gap-2">
           {/* Syntax Guide trigger */}
           <button
+            id="tour-scribble-guide"
             type="button"
             onClick={() => setShowSyntaxGuide(!showSyntaxGuide)}
             className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium transition active:scale-95"
@@ -218,7 +219,7 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* 2. Paper Textures & Spiral / Binder Edge */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+      <div id="tour-paper-controls" className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         {/* Paper Texture */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
@@ -367,7 +368,7 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* 4. Complete Typography, Spacing & Layout Sliders */}
-      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+      <div id="tour-typography-controls" className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
           <AlignLeft className="w-3.5 h-3.5 text-indigo-400" />
           <span>Typography, Indent & Paragraph Spacings</span>
@@ -481,7 +482,7 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* 5. Page Margins (Top, Bottom, Side Margins) */}
-      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+      <div id="tour-margins-controls" className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
           <MoveVertical className="w-3.5 h-3.5 text-indigo-400" />
           <span>Page Margins (Top, Bottom & Sides)</span>
@@ -559,7 +560,7 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* 6. Mobile & Camera Studio, Lighting & Shadows */}
-      <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+      <div id="tour-camera-studio" className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         <div className="flex items-center justify-between">
           <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <Camera className="w-3.5 h-3.5 text-amber-400" />

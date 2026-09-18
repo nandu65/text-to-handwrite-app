@@ -143,6 +143,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
 
       {/* Pages Container with display scaling & optional desk background */}
       <div
+        id="tour-paper-preview"
         ref={containerRef}
         className={`flex-1 overflow-y-auto overflow-x-auto p-8 flex flex-col items-center gap-10 ${deskClass}`}
         style={
