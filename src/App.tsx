@@ -5,6 +5,7 @@ import { Editor } from './components/Editor';
 import { Controls } from './components/Controls';
 import { PaperPreview } from './components/PaperPreview';
 import { CreateHandwritingModal } from './components/CreateHandwritingModal';
+import { GuidedTour } from './components/GuidedTour';
 import { exportAllPagesToPNG, exportAllPagesToPDF } from './utils/exportUtils';
 import {
   getSavedProfiles,
@@ -60,6 +61,9 @@ export function App() {
   const [profiles, setProfiles] = useState<PersonalHandwritingProfile[]>([]);
   const [activeProfile, setActiveProfile] = useState<PersonalHandwritingProfile | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isTourOpen, setIsTourOpen] = useState<boolean>(() => {
+    return !localStorage.getItem('handwrite_studio_tour_completed');
+  });
 
   const [style, setStyle] = useState<HandwritingStyle>({
     fontFamily: FONT_OPTIONS[0].fontFamily,
@@ -238,6 +242,7 @@ export function App() {
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
         onOpenCreateHandwriting={() => setIsCreateModalOpen(true)}
+        onOpenTour={() => setIsTourOpen(true)}
         isExporting={isExporting}
         pageCount={pageCount}
         hasPersonalProfile={style.usePersonalHandwriting && activeProfile !== null}
@@ -293,6 +298,12 @@ export function App() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onProfileCreated={handleProfileCreated}
+      />
+
+      {/* Interactive Guided Tour Walkthrough */}
+      <GuidedTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
       />
     </div>
   );

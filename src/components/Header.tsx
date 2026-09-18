@@ -1,10 +1,11 @@
 import React from 'react';
-import { PenTool, FileText, Sparkles, Image } from 'lucide-react';
+import { PenTool, FileText, Sparkles, Image, Compass } from 'lucide-react';
 
 interface HeaderProps {
   onExportPNG: () => void;
   onExportPDF: () => void;
   onOpenCreateHandwriting: () => void;
+  onOpenTour: () => void;
   isExporting: boolean;
   pageCount: number;
   hasPersonalProfile: boolean;
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExportPNG,
   onExportPDF,
   onOpenCreateHandwriting,
+  onOpenTour,
   isExporting,
   pageCount,
   hasPersonalProfile,
@@ -37,7 +39,17 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
+        {/* Guided Feature Tour button */}
+        <button
+          onClick={onOpenTour}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition active:scale-95 shadow-xs"
+          title="Start interactive feature guide & tutorial"
+        >
+          <Compass className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden sm:inline">Feature Guide</span>
+        </button>
+
         {/* Create My Handwriting feature button */}
         <button
           onClick={onOpenCreateHandwriting}
@@ -62,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
           title={`Export ${pageCount} ${pageCount === 1 ? 'page' : 'pages'} as PNG`}
         >
           <Image className="w-4 h-4 text-emerald-400" />
-          <span>Export PNG</span>
+          <span className="hidden sm:inline">Export PNG</span>
         </button>
 
         {/* Export PDF */}
