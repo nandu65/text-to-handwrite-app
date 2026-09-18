@@ -5,6 +5,7 @@ import { Editor } from './components/Editor';
 import { Controls } from './components/Controls';
 import { PaperPreview } from './components/PaperPreview';
 import { CreateHandwritingModal } from './components/CreateHandwritingModal';
+import { AIScanModal } from './components/AIScanModal';
 import { GuidedTour } from './components/GuidedTour';
 import { exportAllPagesToPNG, exportAllPagesToPDF } from './utils/exportUtils';
 import {
@@ -61,6 +62,7 @@ export function App() {
   const [profiles, setProfiles] = useState<PersonalHandwritingProfile[]>([]);
   const [activeProfile, setActiveProfile] = useState<PersonalHandwritingProfile | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isAIScanOpen, setIsAIScanOpen] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(() => {
     return !localStorage.getItem('handwrite_studio_tour_completed');
   });
@@ -226,6 +228,15 @@ export function App() {
     }
   };
 
+  const handleApplyScannedText = (scannedText: string, mode: 'replace' | 'append') => {
+    if (mode === 'replace') {
+      setText(scannedText);
+    } else {
+      setText((prev) => (prev ? `${prev}\n\n${scannedText}` : scannedText));
+    }
+    showStatus('Applied AI scanned handwriting to document!');
+  };
+
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
       {/* Top Application Header Bar */}
@@ -234,6 +245,7 @@ export function App() {
         onExportPDF={handleExportPDF}
         onOpenCreateHandwriting={() => setIsCreateModalOpen(true)}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenAIScan={() => setIsAIScanOpen(true)}
         isExporting={isExporting}
         pageCount={pageCount}
         hasPersonalProfile={style.usePersonalHandwriting && activeProfile !== null}
@@ -289,6 +301,13 @@ export function App() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onProfileCreated={handleProfileCreated}
+      />
+
+      {/* AI Optical Handwriting Recognition Modal */}
+      <AIScanModal
+        isOpen={isAIScanOpen}
+        onClose={() => setIsAIScanOpen(false)}
+        onApplyText={handleApplyScannedText}
       />
 
       {/* Interactive Guided Tour Walkthrough */}

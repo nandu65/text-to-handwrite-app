@@ -6,6 +6,7 @@ interface HeaderProps {
   onExportPDF: () => void;
   onOpenCreateHandwriting: () => void;
   onOpenTour: () => void;
+  onOpenAIScan: () => void;
   isExporting: boolean;
   pageCount: number;
   hasPersonalProfile: boolean;
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExportPDF,
   onOpenCreateHandwriting,
   onOpenTour,
+  onOpenAIScan,
   isExporting,
   pageCount,
   hasPersonalProfile,
@@ -40,6 +42,16 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2.5">
+        {/* AI Scan Notes Button */}
+        <button
+          onClick={onOpenAIScan}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 hover:text-white border border-amber-500/40 text-xs font-semibold hover:bg-amber-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+          title="Scan handwritten physical notes using in-browser AI Vision"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>AI Scan Notes</span>
+        </button>
+
         {/* Guided Feature Tour button */}
         <button
           onClick={onOpenTour}
@@ -56,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenCreateHandwriting}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold hover:bg-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
         >
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <PenTool className="w-3.5 h-3.5 text-indigo-400" />
           <span>Create My Handwriting</span>
           {hasPersonalProfile && (
             <span className="bg-emerald-500/20 text-emerald-300 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider border border-emerald-500/30">
