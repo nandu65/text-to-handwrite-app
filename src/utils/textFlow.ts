@@ -1,4 +1,4 @@
-import { PageDimensions, HandwritingStyle, PersonalHandwritingProfile } from '../types';
+import { PageDimensions, HandwritingStyle, PersonalHandwritingProfile, FONT_OPTIONS } from '../types';
 
 export const MM_TO_PX = 3.7795275591; // 1 mm in standard 96 DPI CSS pixels
 
@@ -27,8 +27,9 @@ export function calculateLayout(
   const marginRightPx = Math.round(style.marginRightMm * MM_TO_PX);
   const marginBottomPx = Math.round(style.marginBottomMm * MM_TO_PX);
 
-  const printableWidthPx = Math.max(100, widthPx - marginLeftPx - marginRightPx);
-  const printableHeightPx = Math.max(100, heightPx - marginTopPx - marginBottomPx);
+  // Leave a safe right margin buffer so natural cursive handwriting never touches or exceeds the edge
+  const printableWidthPx = Math.max(80, widthPx - marginLeftPx - marginRightPx - 10);
+  const printableHeightPx = Math.max(80, heightPx - marginTopPx - marginBottomPx);
 
   const lineHeightPx = Math.round(style.fontSize * style.lineSpacing);
   const maxLinesPerPage = Math.max(1, Math.floor(printableHeightPx / lineHeightPx));
@@ -50,12 +51,12 @@ export function calculateLayout(
 let measureCanvas: HTMLCanvasElement | null = null;
 
 function getTextWidth(text: string, font: string): number {
-  if (typeof window === 'undefined') return text.length * 10;
+  if (typeof window === 'undefined') return text.length * 12;
   if (!measureCanvas) {
     measureCanvas = document.createElement('canvas');
   }
   const ctx = measureCanvas.getContext('2d');
-  if (!ctx) return text.length * 10;
+  if (!ctx) return text.length * 12;
   ctx.font = font;
   return ctx.measureText(text).width;
 }
@@ -73,32 +74,35 @@ export function stripFormattingTokens(text: string): string {
 }
 
 /**
- * Accurately measures the rendered width of text for fonts or personal glyphs.
+ * Accurately measures the true rendered width of text for both Personal Glyphs and Built-in Cursive Fonts,
+ * accounting for individual character spans, letter spacing, font scaling factors, word gaps, and checkboxes.
  */
 export function measureTextLineWidth(
   rawText: string,
   style: HandwritingStyle,
   activeProfile?: PersonalHandwritingProfile | null
 ): number {
-  const text = stripFormattingTokens(rawText);
-  const fontSpec = `${style.fontSize}px ${style.fontFamily}`;
+  const cleanFontFamily = (style.fontFamily || 'cursive').replace(/'/g, '"');
+  const fontSpec = `${style.fontSize}px ${cleanFontFamily}`;
   const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
-  const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
+  const baseSpacePx = style.fontSize * 0.32 * wordSpacingMultiplier;
+  const userLetterSpacing = style.letterSpacing ?? 0;
 
+  // 1. Personal Glyph Library Measurement
   if (style.usePersonalHandwriting && activeProfile && activeProfile.glyphs) {
     let totalW = 0;
     const cellHeightPx = style.fontSize * 1.30;
-    const userLetterSpacing = style.letterSpacing ?? 0;
+    const cleanText = stripFormattingTokens(rawText);
 
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
+    for (let i = 0; i < cleanText.length; i++) {
+      const char = cleanText[i];
       if (char === ' ') {
         totalW += baseSpacePx;
         continue;
       }
 
       const glyphList = activeProfile.glyphs[char];
-      const nextChar = i < text.length - 1 && text[i + 1] !== ' ' ? text[i + 1] : undefined;
+      const nextChar = i < cleanText.length - 1 && cleanText[i + 1] !== ' ' ? cleanText[i + 1] : undefined;
 
       if (glyphList && glyphList.length > 0) {
         const glyph = glyphList[0];
@@ -131,13 +135,64 @@ export function measureTextLineWidth(
         const fontOverlap = (style.connectedCursive ?? true) && nextChar && /[a-zA-Z]/.test(nextChar)
           ? -Math.round(style.fontSize * 0.04)
           : 0;
-        totalW += getTextWidth(char, fontSpec) + fontOverlap + userLetterSpacing;
+        const charW = Math.max(getTextWidth(char, fontSpec), style.fontSize * 0.38);
+        totalW += charW + fontOverlap + userLetterSpacing;
       }
     }
-    return totalW;
+    return totalW + 8;
   }
 
-  return getTextWidth(text, fontSpec);
+  // 2. Built-in Google Font Character-by-Character Accurate Accumulation
+  const matchedFont = FONT_OPTIONS.find((f) => f.fontFamily === style.fontFamily);
+  const fontVariantScale = matchedFont && matchedFont.variants && matchedFont.variants[0]
+    ? Math.max(1.0, matchedFont.variants[0].scale)
+    : 1.05;
+
+  let totalW = 0;
+  const words = rawText.split(' ');
+
+  for (let wIdx = 0; wIdx < words.length; wIdx++) {
+    const rawWord = words[wIdx];
+    if (!rawWord) continue;
+
+    if (wIdx > 0) {
+      totalW += baseSpacePx;
+    }
+
+    // Hand-drawn Checkbox Token width
+    if (rawWord === '[x]' || rawWord === '[X]' || rawWord === '[ ]' || rawWord === '[]') {
+      totalW += style.fontSize * 0.95 + 8;
+      continue;
+    }
+
+    // Arrow Token width
+    if (rawWord === '->' || rawWord === '-->' || rawWord === '=>' || rawWord === '==>') {
+      totalW += style.fontSize * 0.9 + 6;
+      continue;
+    }
+
+    const cleanWord = stripFormattingTokens(rawWord);
+
+    for (let cIdx = 0; cIdx < cleanWord.length; cIdx++) {
+      const char = cleanWord[cIdx];
+      const nextChar = cIdx < cleanWord.length - 1 ? cleanWord[cIdx + 1] : undefined;
+
+      const measuredCharW = getTextWidth(char, fontSpec);
+      const isLetter = /[a-zA-Z0-9]/.test(char);
+      // Realistic character optical width bounds for cursive styles
+      const minCharW = isLetter ? style.fontSize * 0.44 : style.fontSize * 0.22;
+      const effectiveCharW = Math.max(measuredCharW, minCharW) * fontVariantScale;
+
+      const fontOverlap = (style.connectedCursive ?? true) && nextChar && /[a-zA-Z]/.test(nextChar)
+        ? -Math.round(style.fontSize * 0.04)
+        : 0;
+
+      totalW += effectiveCharW + fontOverlap + userLetterSpacing;
+    }
+  }
+
+  // Safety buffer for line drift & organic wander
+  return totalW + 10;
 }
 
 /**
