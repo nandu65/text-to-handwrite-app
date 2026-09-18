@@ -167,7 +167,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
 
         {/* Content Area with exact margins */}
         <div
-          className="absolute inset-0 flex flex-col z-20"
+          className="absolute inset-0 flex flex-col z-20 overflow-hidden"
           style={{
             paddingTop: `${layout.marginTopPx}px`,
             paddingLeft: `${layout.marginLeftPx}px`,
@@ -183,7 +183,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
               <div
                 key={idx}
                 onClick={() => handleStartEdit(idx, rawLineText)}
-                className={`relative flex items-end group cursor-text transition-colors rounded-xs ${
+                className={`relative flex items-end group cursor-text transition-colors rounded-xs overflow-hidden ${
                   isEditingThisLine ? 'bg-indigo-50/70 ring-1 ring-indigo-400' : 'hover:bg-slate-200/25'
                 }`}
                 style={{
@@ -246,7 +246,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                 ) : (
                   /* Natural handwritten text line with slight organic drift, personal glyphs and character variations */
                   <div
-                    className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-visible"
+                    className="relative z-10 w-full flex items-baseline flex-nowrap pb-1 overflow-hidden"
                     style={{
                       transform: `translate(${lineData.lineOffsetXMarginPx.toFixed(2)}px, ${lineData.lineOffsetYPx.toFixed(2)}px) rotate(${lineData.lineDriftAngleDeg.toFixed(2)}deg)`,
                       transformOrigin: '0% 100%',

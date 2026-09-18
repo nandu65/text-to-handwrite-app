@@ -28,7 +28,7 @@ export function calculateLayout(
   const marginBottomPx = Math.round(style.marginBottomMm * MM_TO_PX);
 
   // Leave a safe right margin buffer so natural cursive handwriting never touches or exceeds the edge
-  const printableWidthPx = Math.max(80, widthPx - marginLeftPx - marginRightPx - 10);
+  const printableWidthPx = Math.max(80, widthPx - marginLeftPx - marginRightPx - 20);
   const printableHeightPx = Math.max(80, heightPx - marginTopPx - marginBottomPx);
 
   const lineHeightPx = Math.round(style.fontSize * style.lineSpacing);
@@ -51,12 +51,12 @@ export function calculateLayout(
 let measureCanvas: HTMLCanvasElement | null = null;
 
 function getTextWidth(text: string, font: string): number {
-  if (typeof window === 'undefined') return text.length * 12;
+  if (typeof window === 'undefined') return text.length * 16;
   if (!measureCanvas) {
     measureCanvas = document.createElement('canvas');
   }
   const ctx = measureCanvas.getContext('2d');
-  if (!ctx) return text.length * 12;
+  if (!ctx) return text.length * 16;
   ctx.font = font;
   return ctx.measureText(text).width;
 }
@@ -74,8 +74,20 @@ export function stripFormattingTokens(text: string): string {
 }
 
 /**
- * Accurately measures the true rendered width of text for both Personal Glyphs and Built-in Cursive Fonts,
- * accounting for individual character spans, letter spacing, font scaling factors, word gaps, and checkboxes.
+ * Returns conservative, bulletproof character width metrics to prevent text overflowing the right margin.
+ */
+function getConservativeCharWidth(char: string, fontSize: number): number {
+  if (char === ' ') return fontSize * 0.38;
+  if (/[mMwW]/.test(char)) return fontSize * 0.88;
+  if (/[A-Z0-9]/.test(char)) return fontSize * 0.72;
+  if (/[bdfhkl]/.test(char)) return fontSize * 0.62;
+  if (/[aceginopqrstuvxyz]/.test(char)) return fontSize * 0.58;
+  if (/[.,!?:;'"\-_]/.test(char)) return fontSize * 0.32;
+  return fontSize * 0.55;
+}
+
+/**
+ * Accurately measures the true rendered width of text for both Personal Glyphs and Built-in Cursive Fonts.
  */
 export function measureTextLineWidth(
   rawText: string,
@@ -85,7 +97,7 @@ export function measureTextLineWidth(
   const cleanFontFamily = (style.fontFamily || 'cursive').replace(/'/g, '"');
   const fontSpec = `${style.fontSize}px ${cleanFontFamily}`;
   const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
-  const baseSpacePx = style.fontSize * 0.32 * wordSpacingMultiplier;
+  const baseSpacePx = style.fontSize * 0.38 * wordSpacingMultiplier;
   const userLetterSpacing = style.letterSpacing ?? 0;
 
   // 1. Personal Glyph Library Measurement
@@ -116,37 +128,24 @@ export function measureTextLineWidth(
           else relHeight = 0.65;
         }
         const targetHeight = Math.max(4, cellHeightPx * relHeight);
-        const targetWidth = Math.max(3, targetHeight * glyph.aspectRatio);
+        const computedGlyphW = targetHeight * (glyph.aspectRatio || 0.75) * 1.12;
+        const conservativeW = getConservativeCharWidth(char, style.fontSize);
+        const targetWidth = Math.max(computedGlyphW, conservativeW);
 
-        let kerningPx = 0;
-        if (nextChar) {
-          const isNextPunctuation = /[.,!?:;'"\-_()/@#+]/.test(nextChar);
-          const isCurrentPunctuation = /[.,!?:;'"\-_()/@#+]/.test(char);
-          if (isNextPunctuation) kerningPx = -Math.round(style.fontSize * 0.15);
-          else if (isCurrentPunctuation) kerningPx = -Math.round(style.fontSize * 0.06);
-          else {
-            const cursiveOverlapRatio = (style.connectedCursive ?? true) ? 0.16 + 0.03 * (style.messiness ?? 1.0) : 0.10;
-            kerningPx = -Math.round(style.fontSize * cursiveOverlapRatio);
-          }
-        }
-
-        totalW += Math.max(1, targetWidth + kerningPx + userLetterSpacing);
+        totalW += targetWidth + userLetterSpacing;
       } else {
-        const fontOverlap = (style.connectedCursive ?? true) && nextChar && /[a-zA-Z]/.test(nextChar)
-          ? -Math.round(style.fontSize * 0.04)
-          : 0;
-        const charW = Math.max(getTextWidth(char, fontSpec), style.fontSize * 0.38);
-        totalW += charW + fontOverlap + userLetterSpacing;
+        const fontW = Math.max(getTextWidth(char, fontSpec), getConservativeCharWidth(char, style.fontSize));
+        totalW += fontW + userLetterSpacing;
       }
     }
-    return totalW + 8;
+    return totalW + 12;
   }
 
-  // 2. Built-in Google Font Character-by-Character Accurate Accumulation
+  // 2. Built-in Google Font Character-by-Character Measurement
   const matchedFont = FONT_OPTIONS.find((f) => f.fontFamily === style.fontFamily);
   const fontVariantScale = matchedFont && matchedFont.variants && matchedFont.variants[0]
     ? Math.max(1.0, matchedFont.variants[0].scale)
-    : 1.05;
+    : 1.08;
 
   let totalW = 0;
   const words = rawText.split(' ');
@@ -159,15 +158,15 @@ export function measureTextLineWidth(
       totalW += baseSpacePx;
     }
 
-    // Hand-drawn Checkbox Token width
+    // Checkbox Tokens
     if (rawWord === '[x]' || rawWord === '[X]' || rawWord === '[ ]' || rawWord === '[]') {
-      totalW += style.fontSize * 0.95 + 8;
+      totalW += style.fontSize * 1.05 + 10;
       continue;
     }
 
-    // Arrow Token width
+    // Arrow Tokens
     if (rawWord === '->' || rawWord === '-->' || rawWord === '=>' || rawWord === '==>') {
-      totalW += style.fontSize * 0.9 + 6;
+      totalW += style.fontSize * 1.0 + 8;
       continue;
     }
 
@@ -175,24 +174,15 @@ export function measureTextLineWidth(
 
     for (let cIdx = 0; cIdx < cleanWord.length; cIdx++) {
       const char = cleanWord[cIdx];
-      const nextChar = cIdx < cleanWord.length - 1 ? cleanWord[cIdx + 1] : undefined;
-
       const measuredCharW = getTextWidth(char, fontSpec);
-      const isLetter = /[a-zA-Z0-9]/.test(char);
-      // Realistic character optical width bounds for cursive styles
-      const minCharW = isLetter ? style.fontSize * 0.44 : style.fontSize * 0.22;
-      const effectiveCharW = Math.max(measuredCharW, minCharW) * fontVariantScale;
+      const conservativeW = getConservativeCharWidth(char, style.fontSize);
+      const effectiveCharW = Math.max(measuredCharW, conservativeW) * fontVariantScale;
 
-      const fontOverlap = (style.connectedCursive ?? true) && nextChar && /[a-zA-Z]/.test(nextChar)
-        ? -Math.round(style.fontSize * 0.04)
-        : 0;
-
-      totalW += effectiveCharW + fontOverlap + userLetterSpacing;
+      totalW += effectiveCharW + userLetterSpacing;
     }
   }
 
-  // Safety buffer for line drift & organic wander
-  return totalW + 10;
+  return totalW + 14;
 }
 
 /**
@@ -210,16 +200,17 @@ export function paginateText(
   const paraIndentPx = style.paragraphIndent ?? 0;
   const extraParaSpacing = style.paragraphSpacing ?? 0;
   const extraSectionSpacing = style.sectionSpacing ?? 0;
+  // Use strict printable width boundary
+  const maxAllowedWidth = layout.printableWidthPx - 16;
 
   for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
     const para = paragraphs[pIdx];
     if (para.trim() === '') {
-      // Empty line / paragraph gap
       allWrappedLines.push('');
       continue;
     }
 
-    // Section spacing before headings or sections
+    // Section spacing before headings
     const isSectionHeading = para.trim().startsWith('__') || para.trim().startsWith('#');
     if (pIdx > 0 && isSectionHeading && extraSectionSpacing > 0) {
       for (let s = 0; s < extraSectionSpacing; s++) {
@@ -233,10 +224,12 @@ export function paginateText(
 
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
+      if (!word) continue;
+
       const testLine = currentLine ? `${currentLine} ${word}` : word;
       const availableWidth = isFirstLineInPara
-        ? layout.printableWidthPx - paraIndentPx
-        : layout.printableWidthPx;
+        ? maxAllowedWidth - paraIndentPx
+        : maxAllowedWidth;
 
       const testWidth = measureTextLineWidth(testLine, style, activeProfile);
 
@@ -248,7 +241,7 @@ export function paginateText(
           currentLine = word;
           isFirstLineInPara = false;
         } else {
-          // Word itself is wider than printable width -> break it up
+          // Word itself is wider than line -> break it up
           let partialWord = '';
           for (const char of word) {
             if (measureTextLineWidth(partialWord + char, style, activeProfile) <= availableWidth) {
@@ -268,7 +261,7 @@ export function paginateText(
       allWrappedLines.push(currentLine);
     }
 
-    // Extra paragraph spacing after paragraph
+    // Extra paragraph spacing
     if (extraParaSpacing > 0 && pIdx < paragraphs.length - 1 && para.trim() !== '') {
       for (let ep = 0; ep < extraParaSpacing; ep++) {
         allWrappedLines.push('');
@@ -276,7 +269,7 @@ export function paginateText(
     }
   }
 
-  // Ensure at least 1 page even if empty
+  // Ensure at least 1 page
   if (allWrappedLines.length === 0) {
     return [['']];
   }
