@@ -188,6 +188,20 @@ export interface PersonalHandwritingProfile {
   previewSampleText: string;
 }
 
+export type PaperTexture = 'white' | 'parchment' | 'kraft' | 'cream';
+export type EdgeStyle = 'none' | 'spiral' | 'binder-holes';
+export type HighlighterColor = 'yellow' | 'cyan' | 'pink' | 'lime';
+
+export interface StickyNote {
+  id: string;
+  text: string;
+  color: 'yellow' | 'pink' | 'cyan' | 'green';
+  rotationDeg: number;
+  topPercent: number;
+  leftPercent: number;
+  widthPx: number;
+}
+
 export interface HandwritingStyle {
   fontFamily: string;
   fontName: string;
@@ -199,6 +213,11 @@ export interface HandwritingStyle {
   messiness?: number; // 0.2 to 2.0 messy handwriting / rushed intensity
   connectedCursive?: boolean; // cursive ligature flow and connected stroke tails
   inkBleed?: boolean; // micro ink pooling and realistic pressure variance
+  inkFade?: boolean; // realistic ink fade and refresh across lines
+  paperTexture?: PaperTexture; // 'white' | 'parchment' | 'kraft' | 'cream'
+  edgeStyle?: EdgeStyle; // 'none' | 'spiral' | 'binder-holes'
+  scannerLighting?: boolean; // realistic mobile cam scanner lighting vignette
+  highlighterColor?: HighlighterColor; // 'yellow' | 'cyan' | 'pink'
   inkColor: string;
   inkOpacity: number;
   paperType: PaperType;
@@ -217,6 +236,7 @@ export interface HandwritingStyle {
   wordSpacingVariation: boolean; // natural word gap variance
   usePersonalHandwriting: boolean; // whether to use personal glyph library
   activeProfileId?: string;
+  stickyNotes?: StickyNote[];
 }
 
 export const INK_COLORS = [
@@ -228,3 +248,10 @@ export const INK_COLORS = [
   { name: 'Teacher Red', value: '#991b1b' },
   { name: 'Emerald Green', value: '#065f46' },
 ];
+
+export const HIGHLIGHTER_COLORS: Record<HighlighterColor, { name: string; bg: string; border: string }> = {
+  yellow: { name: 'Fluorescent Yellow', bg: 'rgba(250, 204, 21, 0.45)', border: 'rgba(234, 179, 8, 0.3)' },
+  cyan: { name: 'Pastel Cyan', bg: 'rgba(34, 211, 238, 0.40)', border: 'rgba(6, 182, 212, 0.3)' },
+  pink: { name: 'Pastel Pink', bg: 'rgba(244, 114, 182, 0.42)', border: 'rgba(236, 72, 153, 0.3)' },
+  lime: { name: 'Neon Lime', bg: 'rgba(163, 230, 53, 0.42)', border: 'rgba(132, 204, 22, 0.3)' },
+};

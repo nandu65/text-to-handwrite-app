@@ -14,38 +14,45 @@ import {
 } from './utils/personalProfileStorage';
 
 const SAMPLES: Record<'repeated' | 'essay' | 'letter' | 'notes', string> = {
-  repeated: `The little letter writer wrote a letter to the teacher. Every little detail matters.
+  repeated: `__Biology Chapter 4: Cellular Respiration__
 
-When we observe how natural handwriting flows across paper, letters like 'l', 't', 'e', and 'r' possess subtle individual traits each time the pen touches down.`,
-  essay: `The Influence of Literature on Human Empathy
+1. Core Definition:
+   -> Cells convert biochemical energy from ==nutrients into ATP==.
+   -> Glycolysis occurs in the cytoplasm and is ~~anaerobic~~ ((crucial for all cells)).
+
+2. Study Checklist:
+   [x] Review Krebs cycle diagram
+   [x] Calculate net ATP yield per glucose molecule
+   [ ] Prepare lab report for Friday
+
+Teacher Note: Great effort on this summary! Keep the handwriting clear.`,
+  essay: `__The Influence of Literature on Human Empathy__
 
 Literature has long served as a mirror to the human soul, allowing us to traverse boundaries of time, geography, and culture. Through the written word, we step into minds fundamentally different from our own.
 
-Psychological studies indicate that reading narrative fiction enhances theory of mind—the capacity to understand others' mental states, beliefs, and emotions.
+Psychological studies indicate that reading ==narrative fiction enhances theory of mind== — the capacity to understand others' mental states, beliefs, and emotions.
 
-Ultimately, storytelling is not merely entertainment; it is an evolutionary mechanism for building communal bonds and fostering deeper collective compassion across generations.`,
+Ultimately, storytelling is not merely ~~idle pastime~~ entertainment; it is an ((evolutionary mechanism)) for building communal bonds and fostering deeper collective compassion.`,
   letter: `Dearest Eleanor,
 
 I hope this letter finds you in wonderful health and high spirits.
 
-The autumn leaves have begun to carpet the cobblestone streets here in golden hues. Yesterday evening, as I walked by the riverbank, the air was crisp and scented with pine and rain.
+The autumn leaves have begun to carpet the cobblestone streets here in ==golden hues==. Yesterday evening, as I walked by the riverbank, the air was crisp and scented with pine and rain.
 
-I often think of our lively conversations by the fireplace and look forward with great excitement to our reunion next month. Please give my warmest regards to everyone at home.
+I often think of our lively conversations by the fireplace and look forward with ((great excitement)) to our reunion next month. Please give my warmest regards to everyone at home.
 
 With heartfelt affection,
 Arthur`,
-  notes: `Physics Lecture: Principles of Wave-Particle Duality
+  notes: `__Physics Lecture: Principles of Wave-Particle Duality__
 
 1. Core Concept:
-   - Light exhibits both wave-like (interference, diffraction) and particle-like (photoelectric effect) properties.
-   - De Broglie Wavelength: λ = h / p, where h is Planck's constant (6.626 × 10⁻³⁴ J·s) and p is momentum.
+   -> Light exhibits both wave-like (interference) and particle-like properties.
+   -> De Broglie Equation: ==λ = h / p==, where h is Planck's constant.
 
-2. Experimental Evidence:
-   - Young's Double-Slit Experiment demonstrates wave interference.
-   - Photoelectric effect confirmed energy quantization in discrete packets called photons (E = hf).
-
-3. Key Takeaway:
-   - Classical physics separates particles and waves, while quantum mechanics unites them under probabilistic wave functions.`,
+2. Experimental Observations:
+   [x] Young's Double-Slit Experiment confirms wave interference.
+   [x] Photoelectric effect proved ((photons carry discrete energy E = hf)).
+   [ ] Complete problem set #4 before Thursday's exam.`,
 };
 
 export function App() {
@@ -65,6 +72,11 @@ export function App() {
     messiness: 1.2,
     connectedCursive: true,
     inkBleed: true,
+    inkFade: true,
+    paperTexture: 'white',
+    edgeStyle: 'spiral',
+    scannerLighting: false,
+    highlighterColor: 'yellow',
     inkColor: INK_COLORS[0].value, // Dark Ink
     inkOpacity: 0.95,
     paperType: 'ruled',
@@ -82,6 +94,17 @@ export function App() {
     lineDrift: true,
     wordSpacingVariation: true,
     usePersonalHandwriting: false,
+    stickyNotes: [
+      {
+        id: 'sn-welcome',
+        text: '📌 Tip: Try ~~scratch~~, ==highlight==, ((circle)), and [x] in the text editor!',
+        color: 'yellow',
+        rotationDeg: -2.5,
+        topPercent: 8,
+        leftPercent: 68,
+        widthPx: 145,
+      },
+    ],
   });
 
   const [isExporting, setIsExporting] = useState<boolean>(false);

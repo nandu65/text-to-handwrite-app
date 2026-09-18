@@ -27,21 +27,52 @@
 
 /* Paper textures and grid lines */
 .paper-ruled-bg {
-  background-color: #ffffff;
   /* Ruled lines using dynamic CSS variables or repeating linear gradient */
   background-image: linear-gradient(to bottom, transparent 96%, #93c5fd 96%);
 }
 
 .paper-graph-bg {
-  background-color: #ffffff;
   background-image: 
-    linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-    linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+    linear-gradient(to right, #cbd5e1 1px, transparent 1px),
+    linear-gradient(to bottom, #cbd5e1 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-.paper-blank-bg {
+/* Paper Color & Texture Variants */
+.texture-white {
   background-color: #ffffff;
+}
+
+.texture-parchment {
+  background-color: #fef9c3;
+  background-image: 
+    radial-gradient(ellipse at 50% 50%, rgba(254, 240, 138, 0.4) 0%, rgba(253, 224, 71, 0.25) 100%),
+    repeating-linear-gradient(45deg, rgba(217, 119, 6, 0.02) 0px, rgba(217, 119, 6, 0.02) 2px, transparent 2px, transparent 4px);
+}
+
+.texture-kraft {
+  background-color: #e6d5be;
+  background-image: 
+    radial-gradient(ellipse at 40% 40%, rgba(245, 230, 211, 0.6) 0%, rgba(214, 192, 160, 0.5) 100%),
+    repeating-linear-gradient(0deg, rgba(120, 53, 15, 0.03) 0px, rgba(120, 53, 15, 0.03) 1px, transparent 1px, transparent 3px);
+}
+
+.texture-cream {
+  background-color: #fdfbf7;
+  background-image: radial-gradient(circle at 50% 50%, #ffffff 0%, #f7f3ea 100%);
+}
+
+/* Mobile CamScanner / Ambient Photo Lighting Overlay */
+.scanner-lighting-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 25% 20%, rgba(255, 255, 255, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 85%, rgba(15, 23, 42, 0.08) 0%, transparent 70%),
+    linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 40%, rgba(0,0,0,0.06) 100%);
+  mix-blend-mode: multiply;
+  z-index: 20;
 }
 
 /* Character variation micro-rotations */

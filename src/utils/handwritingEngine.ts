@@ -44,6 +44,13 @@ export interface WordRenderProps {
   wordIndex: number;
   chars: CharRenderProps[];
   spaceWidthPx: number;
+  isScratched?: boolean;
+  isHighlighted?: boolean;
+  isCircled?: boolean;
+  isUnderlined?: boolean;
+  isCheckbox?: boolean;
+  isChecked?: boolean;
+  rawWord?: string;
 }
 
 export interface LineRenderProps {
@@ -262,7 +269,14 @@ export function computeCharTransform(
 
   // 7. Dynamic ink density & subtle pressure pooling
   const opacityJitter = 1 - (rand() * (0.06 + 0.04 * messiness) * intensity);
-  const inkOpacity = Math.max(0.82, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
+  let inkOpacity = Math.max(0.78, Math.min(1.0, (style.inkOpacity || 0.95) * opacityJitter));
+
+  // Ink Fade Physics (runs low on ink down the lines, refreshes on paragraph breaks)
+  if (style.inkFade ?? true) {
+    const fadeCycle = (lineIndex % 8);
+    const fadeAmount = fadeCycle * 0.018 * (0.8 + 0.4 * messiness);
+    inkOpacity = Math.max(0.72, inkOpacity - fadeAmount);
+  }
 
   // 8. Individual letter spacing variance
   const letterSpacingDelta = (rand() * 2 - 1) * (0.22 + 0.15 * messiness) * intensity;
@@ -311,6 +325,117 @@ export function computeCharTransform(
   };
 }
 
+interface ParsedWordToken {
+  text: string;
+  isScratched?: boolean;
+  isHighlighted?: boolean;
+  isCircled?: boolean;
+  isUnderlined?: boolean;
+  isCheckbox?: boolean;
+  isChecked?: boolean;
+  isArrow?: boolean;
+}
+
+/**
+ * Tokenizes a line into words while detecting inline markdown-like scribble markers.
+ */
+function parseLineTokens(lineText: string): ParsedWordToken[] {
+  const rawWords = lineText.split(' ');
+  const tokens: ParsedWordToken[] = [];
+
+  let inScratch = false;
+  let inHighlight = false;
+  let inCircle = false;
+  let inUnderline = false;
+
+  for (let i = 0; i < rawWords.length; i++) {
+    let word = rawWords[i];
+    if (!word) {
+      tokens.push({ text: '' });
+      continue;
+    }
+
+    // Check for arrows
+    if (word === '->' || word === '-->') {
+      tokens.push({ text: '→', isArrow: true });
+      continue;
+    }
+    if (word === '=>' || word === '==>') {
+      tokens.push({ text: '⇒', isArrow: true });
+      continue;
+    }
+
+    // Check for checkboxes
+    if (word === '[x]' || word === '[X]') {
+      tokens.push({ text: '[x]', isCheckbox: true, isChecked: true });
+      continue;
+    }
+    if (word === '[ ]' || word === '[]') {
+      tokens.push({ text: '[ ]', isCheckbox: true, isChecked: false });
+      continue;
+    }
+
+    let isScratched = inScratch;
+    let isHighlighted = inHighlight;
+    let isCircled = inCircle;
+    let isUnderlined = inUnderline;
+
+    // Check start tokens
+    if (word.startsWith('~~')) {
+      inScratch = true;
+      isScratched = true;
+      word = word.slice(2);
+    }
+    if (word.startsWith('==')) {
+      inHighlight = true;
+      isHighlighted = true;
+      word = word.slice(2);
+    }
+    if (word.startsWith('((')) {
+      inCircle = true;
+      isCircled = true;
+      word = word.slice(2);
+    }
+    if (word.startsWith('__')) {
+      inUnderline = true;
+      isUnderlined = true;
+      word = word.slice(2);
+    }
+
+    // Check end tokens
+    if (word.endsWith('~~')) {
+      isScratched = true;
+      inScratch = false;
+      word = word.slice(0, -2);
+    }
+    if (word.endsWith('==')) {
+      isHighlighted = true;
+      inHighlight = false;
+      word = word.slice(0, -2);
+    }
+    if (word.endsWith('))')) {
+      isCircled = true;
+      inCircle = false;
+      word = word.slice(0, -2);
+    }
+    if (word.endsWith('__')) {
+      isUnderlined = true;
+      inUnderline = false;
+      word = word.slice(0, -2);
+    }
+
+    tokens.push({
+      text: word,
+      isScratched,
+      isHighlighted,
+      isCircled,
+      isUnderlined,
+    });
+  }
+
+  return tokens;
+}
+
 /**
  * Processes a line of text into words and individual characters with natural human handwriting variance.
  */
@@ -344,14 +469,15 @@ export function processHandwrittenLine(
     lineOffsetXMarginPx = Math.max(-6, Math.min(10, waveOffset + humanJitter));
   }
 
-  const rawWords = lineText.split(' ');
+  const tokens = parseLineTokens(lineText);
   const words: WordRenderProps[] = [];
 
   // Track character occurrence counts across the line
   const charOccurrences = new Map<string, number>();
 
-  for (let wIdx = 0; wIdx < rawWords.length; wIdx++) {
-    const word = rawWords[wIdx];
+  for (let wIdx = 0; wIdx < tokens.length; wIdx++) {
+    const token = tokens[wIdx];
+    const wordText = token.text;
     const wordHash = hashValues(seed, pageIndex, lineIndex, wIdx, 'word');
     const wordRand = mulberry32(wordHash);
 
@@ -366,9 +492,9 @@ export function processHandwrittenLine(
     const chars: CharRenderProps[] = [];
     let prevChar = '';
 
-    for (let cIdx = 0; cIdx < word.length; cIdx++) {
-      const char = word[cIdx];
-      const nextChar = cIdx < word.length - 1 ? word[cIdx + 1] : undefined;
+    for (let cIdx = 0; cIdx < wordText.length; cIdx++) {
+      const char = wordText[cIdx];
+      const nextChar = cIdx < wordText.length - 1 ? wordText[cIdx + 1] : undefined;
       const charLower = char.toLowerCase();
       const occurrenceCount = charOccurrences.get(charLower) || 0;
       charOccurrences.set(charLower, occurrenceCount + 1);
@@ -383,7 +509,7 @@ export function processHandwrittenLine(
         occurrenceCount,
         prevChar,
         nextChar,
-        word.length,
+        wordText.length,
         activeProfile
       );
 
@@ -406,6 +532,13 @@ export function processHandwrittenLine(
       wordIndex: wIdx,
       chars,
       spaceWidthPx,
+      isScratched: token.isScratched,
+      isHighlighted: token.isHighlighted,
+      isCircled: token.isCircled,
+      isUnderlined: token.isUnderlined,
+      isCheckbox: token.isCheckbox,
+      isChecked: token.isChecked,
+      rawWord: wordText,
     });
   }
 

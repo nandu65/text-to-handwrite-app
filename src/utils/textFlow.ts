@@ -60,14 +60,27 @@ function getTextWidth(text: string, font: string): number {
   return ctx.measureText(text).width;
 }
 
+export function stripFormattingTokens(text: string): string {
+  return text
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/==(.*?)==/g, '$1')
+    .replace(/\(\((.*?)\)\)/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/\[x\]|\[X\]/g, '✓')
+    .replace(/\[ \]|\[\]/g, '◻')
+    .replace(/-->|->/g, '→')
+    .replace(/==>|=>/g, '⇒');
+}
+
 /**
  * Accurately measures the rendered width of text for fonts or personal glyphs.
  */
 export function measureTextLineWidth(
-  text: string,
+  rawText: string,
   style: HandwritingStyle,
   activeProfile?: PersonalHandwritingProfile | null
 ): number {
+  const text = stripFormattingTokens(rawText);
   const fontSpec = `${style.fontSize}px ${style.fontFamily}`;
   const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
   const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
