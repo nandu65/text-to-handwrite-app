@@ -481,13 +481,17 @@ export function processHandwrittenLine(
     const wordHash = hashValues(seed, pageIndex, lineIndex, wIdx, 'word');
     const wordRand = mulberry32(wordHash);
 
-    // Natural word space width
+    // Natural word & sentence space width
     const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
-    const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
+    const sentenceSpacingMultiplier = style.sentenceSpacing ?? 1.0;
+    const isSentenceEnd = /[.!?:]['"]?$/.test(wordText);
+    const spaceMultiplier = isSentenceEnd ? sentenceSpacingMultiplier : 1.0;
+
+    const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier * spaceMultiplier;
     const spaceVarPx = style.wordSpacingVariation && style.subtleVariation
-      ? (wordRand() * 2 - 1) * (style.fontSize * (0.05 + 0.03 * messiness)) * intensity
+      ? (wordRand() * 2 - 1) * (style.fontSize * (0.04 + 0.02 * messiness)) * intensity
       : 0;
-    const spaceWidthPx = Math.max(4, Math.round(baseSpacePx + spaceVarPx));
+    const spaceWidthPx = Math.max(3, Math.round(baseSpacePx + spaceVarPx));
 
     const chars: CharRenderProps[] = [];
     let prevChar = '';

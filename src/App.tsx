@@ -74,6 +74,7 @@ export function App() {
     lineSpacing: 1.85,
     letterSpacing: -0.5,
     wordSpacing: 1.0,
+    sentenceSpacing: 1.0,
     paragraphSpacing: 0,
     paragraphIndent: 0,
     sectionSpacing: 0,

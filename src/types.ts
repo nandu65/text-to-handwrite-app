@@ -202,7 +202,8 @@ export interface HandwritingStyle {
   fontSize: number; // in px at base scale (e.g., 26)
   lineSpacing: number; // line-height multiplier e.g. 1.85
   letterSpacing: number; // in px e.g. 0.0
-  wordSpacing?: number; // word gap multiplier e.g. 1.0 (0.6x to 1.8x)
+  wordSpacing?: number; // word gap multiplier e.g. 1.0 (0.6x to 2.2x)
+  sentenceSpacing?: number; // sentence gap / punctuation space multiplier (1.0x to 3.0x)
   paragraphSpacing?: number; // extra empty lines or ratio between paragraphs (0 to 3)
   paragraphIndent?: number; // first-line indent in px (0 to 60px)
   sectionSpacing?: number; // extra spacing before headers/sections (0 to 3)

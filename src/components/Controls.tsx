@@ -346,10 +346,11 @@ export const Controls: React.FC<ControlsProps> = ({
       <div id="tour-typography-controls" className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
           <AlignLeft className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Typography, Indent & Paragraph Spacings</span>
+          <span>Typography, Letter & Sentence Spacings</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Row 1: Core typography sizing & character/word gaps */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Font Size */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
@@ -384,10 +385,70 @@ export const Controls: React.FC<ControlsProps> = ({
             />
           </div>
 
+          {/* Character Gap / Letter Spacing Lever */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Character Gap</span>
+              <span className="text-amber-400 font-mono font-medium">
+                {(style.letterSpacing ?? 0) >= 0 ? '+' : ''}
+                {(style.letterSpacing ?? 0).toFixed(1)}px
+              </span>
+            </div>
+            <input
+              type="range"
+              min={-3}
+              max={6}
+              step={0.5}
+              value={style.letterSpacing ?? 0}
+              onChange={(e) => onChange({ letterSpacing: Number(e.target.value) })}
+              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              title="Adjust letter spacing / character gap"
+            />
+          </div>
+
+          {/* Word Gap Lever */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Word Gap</span>
+              <span className="text-indigo-400 font-mono font-medium">{(style.wordSpacing ?? 1.0).toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={0.6}
+              max={2.0}
+              step={0.1}
+              value={style.wordSpacing ?? 1.0}
+              onChange={(e) => onChange({ wordSpacing: Number(e.target.value) })}
+              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              title="Adjust space between words"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Sentence gap & paragraph structure */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+          {/* Sentence Gap Lever */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-400">Sentence Gap</span>
+              <span className="text-amber-400 font-mono font-medium">{(style.sentenceSpacing ?? 1.0).toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={1.0}
+              max={3.0}
+              step={0.1}
+              value={style.sentenceSpacing ?? 1.0}
+              onChange={(e) => onChange({ sentenceSpacing: Number(e.target.value) })}
+              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              title="Adjust gap after periods, question marks, and exclamation points"
+            />
+          </div>
+
           {/* Paragraph Indent */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Paragraph Indent</span>
+              <span className="text-slate-400">Para Indent</span>
               <span className="text-indigo-400 font-mono font-medium">{style.paragraphIndent ?? 0}px</span>
             </div>
             <input
@@ -400,9 +461,7 @@ export const Controls: React.FC<ControlsProps> = ({
               className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           {/* Paragraph Spacing */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
@@ -433,23 +492,6 @@ export const Controls: React.FC<ControlsProps> = ({
               step={1}
               value={style.sectionSpacing ?? 0}
               onChange={(e) => onChange({ sectionSpacing: Number(e.target.value) })}
-              className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-            />
-          </div>
-
-          {/* Word Gap */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Word Gap</span>
-              <span className="text-indigo-400 font-mono font-medium">{(style.wordSpacing ?? 1.0).toFixed(1)}×</span>
-            </div>
-            <input
-              type="range"
-              min={0.6}
-              max={1.8}
-              step={0.1}
-              value={style.wordSpacing ?? 1.0}
-              onChange={(e) => onChange({ wordSpacing: Number(e.target.value) })}
               className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
             />
           </div>

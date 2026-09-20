@@ -27,8 +27,8 @@ export function calculateLayout(
   const marginRightPx = Math.round(style.marginRightMm * MM_TO_PX);
   const marginBottomPx = Math.round(style.marginBottomMm * MM_TO_PX);
 
-  // Leave a safe right margin buffer so natural cursive handwriting never touches or exceeds the edge
-  const printableWidthPx = Math.max(80, widthPx - marginLeftPx - marginRightPx - 20);
+  // Use full available line width between left and right margins
+  const printableWidthPx = Math.max(80, widthPx - marginLeftPx - marginRightPx);
   const printableHeightPx = Math.max(80, heightPx - marginTopPx - marginBottomPx);
 
   const lineHeightPx = Math.round(style.fontSize * style.lineSpacing);
@@ -51,12 +51,12 @@ export function calculateLayout(
 let measureCanvas: HTMLCanvasElement | null = null;
 
 function getTextWidth(text: string, font: string): number {
-  if (typeof window === 'undefined') return text.length * 16;
+  if (typeof window === 'undefined') return text.length * 12;
   if (!measureCanvas) {
     measureCanvas = document.createElement('canvas');
   }
   const ctx = measureCanvas.getContext('2d');
-  if (!ctx) return text.length * 16;
+  if (!ctx) return text.length * 12;
   ctx.font = font;
   return ctx.measureText(text).width;
 }
@@ -74,19 +74,6 @@ export function stripFormattingTokens(text: string): string {
 }
 
 /**
- * Returns conservative, bulletproof character width metrics to prevent text overflowing the right margin.
- */
-function getConservativeCharWidth(char: string, fontSize: number): number {
-  if (char === ' ') return fontSize * 0.38;
-  if (/[mMwW]/.test(char)) return fontSize * 0.88;
-  if (/[A-Z0-9]/.test(char)) return fontSize * 0.72;
-  if (/[bdfhkl]/.test(char)) return fontSize * 0.62;
-  if (/[aceginopqrstuvxyz]/.test(char)) return fontSize * 0.58;
-  if (/[.,!?:;'"\-_]/.test(char)) return fontSize * 0.32;
-  return fontSize * 0.55;
-}
-
-/**
  * Accurately measures the true rendered width of text for both Personal Glyphs and Built-in Cursive Fonts.
  */
 export function measureTextLineWidth(
@@ -97,7 +84,8 @@ export function measureTextLineWidth(
   const cleanFontFamily = (style.fontFamily || 'cursive').replace(/'/g, '"');
   const fontSpec = `${style.fontSize}px ${cleanFontFamily}`;
   const wordSpacingMultiplier = style.wordSpacing ?? 1.0;
-  const baseSpacePx = style.fontSize * 0.38 * wordSpacingMultiplier;
+  const sentenceSpacingMultiplier = style.sentenceSpacing ?? 1.0;
+  const baseSpacePx = style.fontSize * 0.28 * wordSpacingMultiplier;
   const userLetterSpacing = style.letterSpacing ?? 0;
 
   // 1. Personal Glyph Library Measurement
@@ -109,13 +97,13 @@ export function measureTextLineWidth(
     for (let i = 0; i < cleanText.length; i++) {
       const char = cleanText[i];
       if (char === ' ') {
-        totalW += baseSpacePx;
+        const prevChar = i > 0 ? cleanText[i - 1] : '';
+        const isSentenceEnd = /[.!?:]/.test(prevChar);
+        totalW += isSentenceEnd ? baseSpacePx * sentenceSpacingMultiplier : baseSpacePx;
         continue;
       }
 
       const glyphList = activeProfile.glyphs[char];
-      const nextChar = i < cleanText.length - 1 && cleanText[i + 1] !== ' ' ? cleanText[i + 1] : undefined;
-
       if (glyphList && glyphList.length > 0) {
         const glyph = glyphList[0];
         let relHeight = glyph.heightRatioInCell;
@@ -128,25 +116,17 @@ export function measureTextLineWidth(
           else relHeight = 0.65;
         }
         const targetHeight = Math.max(4, cellHeightPx * relHeight);
-        const computedGlyphW = targetHeight * (glyph.aspectRatio || 0.75) * 1.12;
-        const conservativeW = getConservativeCharWidth(char, style.fontSize);
-        const targetWidth = Math.max(computedGlyphW, conservativeW);
-
-        totalW += targetWidth + userLetterSpacing;
+        const computedGlyphW = targetHeight * (glyph.aspectRatio || 0.75);
+        totalW += computedGlyphW + userLetterSpacing;
       } else {
-        const fontW = Math.max(getTextWidth(char, fontSpec), getConservativeCharWidth(char, style.fontSize));
+        const fontW = getTextWidth(char, fontSpec) || style.fontSize * 0.40;
         totalW += fontW + userLetterSpacing;
       }
     }
-    return totalW + 12;
+    return totalW;
   }
 
-  // 2. Built-in Google Font Character-by-Character Measurement
-  const matchedFont = FONT_OPTIONS.find((f) => f.fontFamily === style.fontFamily);
-  const fontVariantScale = matchedFont && matchedFont.variants && matchedFont.variants[0]
-    ? Math.max(1.0, matchedFont.variants[0].scale)
-    : 1.08;
-
+  // 2. Built-in Cursive Font Word-by-Word & Character Measurement
   let totalW = 0;
   const words = rawText.split(' ');
 
@@ -155,18 +135,20 @@ export function measureTextLineWidth(
     if (!rawWord) continue;
 
     if (wIdx > 0) {
-      totalW += baseSpacePx;
+      const prevWord = words[wIdx - 1];
+      const isSentenceEnd = /[.!?:]['"]?$/.test(prevWord);
+      totalW += isSentenceEnd ? baseSpacePx * sentenceSpacingMultiplier : baseSpacePx;
     }
 
     // Checkbox Tokens
     if (rawWord === '[x]' || rawWord === '[X]' || rawWord === '[ ]' || rawWord === '[]') {
-      totalW += style.fontSize * 1.05 + 10;
+      totalW += style.fontSize * 0.85 + 6;
       continue;
     }
 
     // Arrow Tokens
     if (rawWord === '->' || rawWord === '-->' || rawWord === '=>' || rawWord === '==>') {
-      totalW += style.fontSize * 1.0 + 8;
+      totalW += style.fontSize * 0.75 + 4;
       continue;
     }
 
@@ -174,15 +156,15 @@ export function measureTextLineWidth(
 
     for (let cIdx = 0; cIdx < cleanWord.length; cIdx++) {
       const char = cleanWord[cIdx];
-      const measuredCharW = getTextWidth(char, fontSpec);
-      const conservativeW = getConservativeCharWidth(char, style.fontSize);
-      const effectiveCharW = Math.max(measuredCharW, conservativeW) * fontVariantScale;
-
-      totalW += effectiveCharW + userLetterSpacing;
+      let measuredCharW = getTextWidth(char, fontSpec);
+      if (measuredCharW <= 0) {
+        measuredCharW = style.fontSize * (/[A-Z0-9]/.test(char) ? 0.48 : 0.36);
+      }
+      totalW += measuredCharW + userLetterSpacing;
     }
   }
 
-  return totalW + 14;
+  return totalW;
 }
 
 /**
@@ -200,8 +182,7 @@ export function paginateText(
   const paraIndentPx = style.paragraphIndent ?? 0;
   const extraParaSpacing = style.paragraphSpacing ?? 0;
   const extraSectionSpacing = style.sectionSpacing ?? 0;
-  // Use strict printable width boundary
-  const maxAllowedWidth = layout.printableWidthPx - 16;
+  const maxAllowedWidth = layout.printableWidthPx;
 
   for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
     const para = paragraphs[pIdx];
