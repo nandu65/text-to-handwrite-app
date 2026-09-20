@@ -1,8 +1,9 @@
 import React, { forwardRef, useMemo, useState, useRef, useEffect } from 'react';
-import { HandwritingStyle, PaperType, PersonalHandwritingProfile, HIGHLIGHTER_COLORS } from '../types';
+import { HandwritingStyle, PaperType, PersonalHandwritingProfile, HIGHLIGHTER_COLORS, HighlighterColor } from '../types';
 import { PageLayout } from '../utils/textFlow';
 import { processHandwrittenLine } from '../utils/handwritingEngine';
-import { Edit3, Check, X } from 'lucide-react';
+import { Edit3, Check, X, Sparkles, Highlighter, Circle, Underline, CheckSquare, ArrowRight } from 'lucide-react';
+import { OnPageFormattingToolbar, SelectionCoords } from './OnPageFormattingToolbar';
 
 interface HandwritingPageProps {
   lines: string[];
@@ -12,10 +13,12 @@ interface HandwritingPageProps {
   style: HandwritingStyle;
   activeProfile?: PersonalHandwritingProfile | null;
   onUpdateLine?: (pageIndex: number, lineIndex: number, newText: string) => void;
+  onFormatSelection?: (selectedText: string, formatType: 'highlight' | 'scratch' | 'circle' | 'underline' | 'checkbox' | 'arrow' | 'clear', color?: HighlighterColor) => void;
+  onReplaceSelection?: (oldText: string, newText: string) => void;
 }
 
 export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
-  ({ lines, pageIndex, totalPages, layout, style, activeProfile, onUpdateLine }, ref) => {
+  ({ lines, pageIndex, totalPages, layout, style, activeProfile, onUpdateLine, onFormatSelection, onReplaceSelection }, ref) => {
     const totalLinesCount = layout.maxLinesPerPage;
     const linesToRender = useMemo(
       () => Array.from({ length: totalLinesCount }, (_, i) => lines[i] || ''),
@@ -26,6 +29,11 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
     const [editingLineIdx, setEditingLineIdx] = useState<number | null>(null);
     const [editingValue, setEditingValue] = useState<string>('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const pageContainerRef = useRef<HTMLDivElement | null>(null);
+
+    // Text selection state on page
+    const [selectedText, setSelectedText] = useState<string>('');
+    const [selectionCoords, setSelectionCoords] = useState<SelectionCoords | null>(null);
 
     // Process all lines with the handwriting engine and active personal profile
     const processedLines = useMemo(() => {
@@ -45,6 +53,8 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
       if (!onUpdateLine) return;
       setEditingLineIdx(idx);
       setEditingValue(currentText);
+      setSelectedText('');
+      setSelectionCoords(null);
     };
 
     const handleSaveEdit = () => {
@@ -56,6 +66,48 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
 
     const handleCancelEdit = () => {
       setEditingLineIdx(null);
+    };
+
+    const handleLineQuickFormat = (formatType: 'highlight' | 'scratch' | 'circle' | 'underline' | 'checkbox' | 'arrow') => {
+      let val = editingValue.trim();
+      if (!val) return;
+      if (formatType === 'highlight') val = `==${val}==`;
+      else if (formatType === 'scratch') val = `~~${val}~~`;
+      else if (formatType === 'circle') val = `((${val}))`;
+      else if (formatType === 'underline') val = `__${val}__`;
+      else if (formatType === 'checkbox') val = `[x] ${val}`;
+      else if (formatType === 'arrow') val = `-> ${val}`;
+      setEditingValue(val);
+    };
+
+    const handleMouseUp = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) {
+        return;
+      }
+      const text = selection.toString().trim();
+      if (text.length > 0 && pageContainerRef.current) {
+        try {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          const parentRect = pageContainerRef.current.getBoundingClientRect();
+          setSelectedText(text);
+          setSelectionCoords({
+            top: rect.top - parentRect.top,
+            left: rect.left - parentRect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        } catch (e) {}
+      }
+    };
+
+    const handlePageClick = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) {
+        setSelectedText('');
+        setSelectionCoords(null);
+      }
     };
 
     // Paper background style
@@ -76,9 +128,18 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
 
     return (
       <div
-        ref={ref}
+        ref={(node) => {
+          pageContainerRef.current = node;
+          if (typeof ref === 'function') {
+            ref(node);
+          } else if (ref) {
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }
+        }}
         data-page-index={pageIndex}
-        className={`relative bg-white text-slate-900 ${shadowClass} select-none transition-shadow ${textureClass} ${getPaperBackground(
+        onMouseUp={handleMouseUp}
+        onClick={handlePageClick}
+        className={`relative bg-white text-slate-900 ${shadowClass} transition-shadow ${textureClass} ${getPaperBackground(
           style.paperType
         )}`}
         style={{
@@ -88,8 +149,33 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
           minHeight: `${layout.heightPx}px`,
           boxSizing: 'border-box',
           overflow: 'hidden',
+          userSelect: 'text',
         }}
       >
+        {/* Floating On-Page Quick Formatting Toolbar on Text Selection */}
+        {selectedText && selectionCoords && (
+          <OnPageFormattingToolbar
+            selectedText={selectedText}
+            coords={selectionCoords}
+            onApplyFormat={(formatType, color) => {
+              if (color && style.highlighterColor !== color) {
+                // optional: if custom highlighter color
+              }
+              onFormatSelection?.(selectedText, formatType, color);
+              setSelectedText('');
+              setSelectionCoords(null);
+            }}
+            onReplaceText={(newText) => {
+              onReplaceSelection?.(selectedText, newText);
+              setSelectedText('');
+              setSelectionCoords(null);
+            }}
+            onClose={() => {
+              setSelectedText('');
+              setSelectionCoords(null);
+            }}
+          />
+        )}
         {/* Mobile Camera Lighting, Tone & Phone Shadow Overlays */}
         {(style.scannerLighting || (style.cameraLightingTone && style.cameraLightingTone !== 'neutral')) && (
           <>
@@ -257,9 +343,62 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                 {/* Inline direct line editor input when clicked */}
                 {isEditingThisLine ? (
                   <div
-                    className="absolute inset-0 z-40 flex items-center bg-white/95 px-2 shadow-md rounded border border-indigo-400"
+                    className="absolute inset-0 z-40 flex items-center bg-white/95 px-2 shadow-lg rounded border-2 border-indigo-500"
                     onClick={(e) => e.stopPropagation()}
                   >
+                    {/* Floating Quick Action Formatting Header above line */}
+                    <div className="absolute -top-7 left-2 flex items-center gap-1 bg-slate-900 text-white px-2 py-0.5 rounded-md shadow-md text-[10px] z-50 border border-indigo-500/40">
+                      <span className="text-slate-400 font-semibold mr-1">Format line:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('highlight')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-amber-300 font-medium"
+                        title="Highlight line"
+                      >
+                        Highlight
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('scratch')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-rose-300 font-medium"
+                        title="Scratch line"
+                      >
+                        Scratch
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('circle')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-indigo-300 font-medium"
+                        title="Circle line"
+                      >
+                        Circle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('underline')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-blue-300 font-medium"
+                        title="Underline line"
+                      >
+                        Underline
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('checkbox')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-emerald-300 font-medium"
+                        title="Add Checkbox"
+                      >
+                        [x]
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLineQuickFormat('arrow')}
+                        className="px-1 py-0.5 rounded hover:bg-slate-800 text-violet-300 font-medium"
+                        title="Add Arrow"
+                      >
+                        -&gt;
+                      </button>
+                    </div>
+
                     <input
                       ref={inputRef}
                       type="text"
@@ -276,15 +415,16 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
                       <button
                         type="button"
                         onClick={handleSaveEdit}
-                        className="p-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white"
+                        className="p-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[11px] flex items-center gap-0.5 px-2"
                         title="Save (Enter)"
                       >
                         <Check className="w-3 h-3" />
+                        <span>Save</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleCancelEdit}
-                        className="p-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700"
+                        className="p-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-[11px] px-2"
                         title="Cancel (Esc)"
                       >
                         <X className="w-3 h-3" />

@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { HandwritingStyle, PAGE_SIZES, PersonalHandwritingProfile } from '../types';
+import { HandwritingStyle, PAGE_SIZES, PersonalHandwritingProfile, HighlighterColor } from '../types';
 import { calculateLayout, paginateText } from '../utils/textFlow';
+import { applyFormattingToDocument, replaceSelectionInDocument } from '../utils/textFormatter';
 import { HandwritingPage } from './HandwritingPage';
-import { ZoomIn, ZoomOut, RotateCcw, FileText, MousePointer } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, FileText, MousePointer, Sparkles } from 'lucide-react';
 
 interface PaperPreviewProps {
   text: string;
@@ -88,10 +89,26 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
     onTextChange(flattenedText);
   };
 
+  const handleFormatSelection = (
+    selectedText: string,
+    formatType: 'highlight' | 'scratch' | 'circle' | 'underline' | 'checkbox' | 'arrow' | 'clear',
+    color?: HighlighterColor
+  ) => {
+    if (!onTextChange) return;
+    const updated = applyFormattingToDocument(text, selectedText, formatType);
+    onTextChange(updated);
+  };
+
+  const handleReplaceSelection = (oldText: string, newText: string) => {
+    if (!onTextChange) return;
+    const updated = replaceSelectionInDocument(text, oldText, newText);
+    onTextChange(updated);
+  };
+
   const deskClass = style.deskSurface && style.deskSurface !== 'none' ? `desk-${style.deskSurface}` : '';
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-950/80 overflow-hidden relative select-none">
+    <div className="flex-1 flex flex-col h-full bg-slate-950/80 overflow-hidden relative">
       {/* Top Preview Status & Zoom Bar */}
       <div className="h-11 border-b border-slate-800/80 px-6 flex items-center justify-between shrink-0 bg-slate-900/60 backdrop-blur z-20 flex-wrap gap-2">
         <div className="flex items-center gap-3 text-xs text-slate-300">
@@ -161,7 +178,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
               marginBottom: `${layout.heightPx * (zoomScale - 1)}px`,
             }}
           >
-            {/* Handwriting Document Page with Click-to-Edit */}
+            {/* Handwriting Document Page with Click-to-Edit & On-Page Selection Formatting */}
             <HandwritingPage
               ref={(el) => {
                 pageRefs.current[index] = el;
@@ -173,6 +190,8 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({
               style={style}
               activeProfile={activeProfile}
               onUpdateLine={handleUpdateLine}
+              onFormatSelection={handleFormatSelection}
+              onReplaceSelection={handleReplaceSelection}
             />
           </div>
         ))}
