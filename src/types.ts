@@ -218,7 +218,9 @@ export interface HandwritingStyle {
   cameraLightingTone?: CameraLightingTone; // warmth & mood of light
   cameraVignetteStrength?: number; // 0 to 1 intensity
   cameraPhoneShadow?: boolean; // casts phone/hand silhouette shadow
+  cameraPhoneShadowIntensity?: number; // 0 to 100% mobile phone shadow lever
   cameraDeskShadow?: PageShadowDepth; // desk elevation shadow
+  pageShadowIntensity?: number; // 0 to 100% page drop shadow lever
   deskSurface?: DeskSurface; // desk material behind paper
   paperCreases?: boolean; // subtle center fold and corner creases
   paperFoldingIntensity?: number; // 0 to 100% fold lever intensity

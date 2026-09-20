@@ -118,7 +118,29 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
     };
 
     const textureClass = `texture-${style.paperTexture || 'white'}`;
-    const shadowClass = style.cameraDeskShadow ? `shadow-depth-${style.cameraDeskShadow}` : 'page-shadow';
+    const pageShadowVal = style.pageShadowIntensity !== undefined
+      ? style.pageShadowIntensity
+      : style.cameraDeskShadow === 'none'
+      ? 0
+      : style.cameraDeskShadow === 'subtle'
+      ? 25
+      : style.cameraDeskShadow === 'deep'
+      ? 90
+      : 55;
+
+    const dynamicBoxShadow = pageShadowVal === 0
+      ? 'none'
+      : (() => {
+          const s = pageShadowVal / 100;
+          return `0 ${Math.max(1, Math.round(2 * s))}px ${Math.round(8 * s)}px rgba(0,0,0,${(0.15 * s).toFixed(3)}), 0 ${Math.round(16 * s)}px ${Math.round(38 * s)}px rgba(0,0,0,${(0.38 * s).toFixed(3)}), 0 ${Math.round(30 * s)}px ${Math.round(70 * s)}px rgba(0,0,0,${(0.48 * s).toFixed(3)})`;
+        })();
+
+    const phoneShadowIntensity = style.cameraPhoneShadowIntensity !== undefined
+      ? style.cameraPhoneShadowIntensity
+      : style.cameraPhoneShadow
+      ? 60
+      : 0;
+
     const activeHighlighter = HIGHLIGHTER_COLORS[style.highlighterColor || 'yellow'] || HIGHLIGHTER_COLORS.yellow;
 
     // Spiral rings count based on page height
@@ -139,7 +161,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
         data-page-index={pageIndex}
         onMouseUp={handleMouseUp}
         onClick={handlePageClick}
-        className={`relative bg-white text-slate-900 ${shadowClass} transition-shadow ${textureClass} ${getPaperBackground(
+        className={`relative bg-white text-slate-900 transition-shadow ${textureClass} ${getPaperBackground(
           style.paperType
         )}`}
         style={{
@@ -150,6 +172,7 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
           boxSizing: 'border-box',
           overflow: 'hidden',
           userSelect: 'text',
+          boxShadow: dynamicBoxShadow,
         }}
       >
         {/* Floating On-Page Quick Formatting Toolbar on Text Selection */}
@@ -192,7 +215,14 @@ export const HandwritingPage = forwardRef<HTMLDivElement, HandwritingPageProps>(
         )}
 
         {/* Smartphone silhouette cast shadow */}
-        {style.cameraPhoneShadow && <div className="phone-cast-shadow" />}
+        {phoneShadowIntensity > 0 && (
+          <div
+            className="phone-cast-shadow"
+            style={{
+              opacity: (phoneShadowIntensity / 100) * 0.95,
+            }}
+          />
+        )}
 
         {/* Dynamic Realistic Paper Folding & Crease Physics */}
         {(() => {

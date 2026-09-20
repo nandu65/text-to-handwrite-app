@@ -577,6 +577,7 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* 6. Mobile & Camera Studio, Lighting & Shadows */}
+      {/* 6. Mobile & Camera Studio, Lighting & Shadows */}
       <div id="tour-camera-studio" className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
         <div className="flex items-center justify-between">
           <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
@@ -595,7 +596,7 @@ export const Controls: React.FC<ControlsProps> = ({
           </label>
         </div>
 
-        {/* Lighting Tone & Shadow Options */}
+        {/* Lighting Tone & Desk Surfaces */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           {/* Lighting Mood / Warmth */}
           <div className="space-y-1.5">
@@ -627,38 +628,6 @@ export const Controls: React.FC<ControlsProps> = ({
             </div>
           </div>
 
-          {/* Page Elevation / Shadow Depth */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] text-slate-400 flex items-center gap-1">
-              <Box className="w-3 h-3 text-indigo-400" />
-              <span>3D Page Shadow Depth</span>
-            </label>
-            <div className="grid grid-cols-4 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[10px]">
-              {[
-                { id: 'none', label: 'Flat' },
-                { id: 'subtle', label: 'Subtle' },
-                { id: 'floating', label: 'Floating' },
-                { id: 'deep', label: 'Deep 3D' },
-              ].map((shadow) => (
-                <button
-                  key={shadow.id}
-                  type="button"
-                  onClick={() => onChange({ cameraDeskShadow: shadow.id as PageShadowDepth })}
-                  className={`py-1 px-1 rounded font-medium transition ${
-                    (style.cameraDeskShadow || 'floating') === shadow.id
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                  }`}
-                >
-                  {shadow.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Desk Surface & Extra Camera Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           {/* Desk Surface */}
           <div className="space-y-1.5">
             <label className="text-[11px] text-slate-400">Desk Surface Material</label>
@@ -684,19 +653,117 @@ export const Controls: React.FC<ControlsProps> = ({
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Camera Extra Toggles */}
-          <div className="flex flex-col justify-end space-y-1.5 text-[11px] text-slate-300">
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={style.cameraPhoneShadow ?? false}
-                onChange={(e) => onChange({ cameraPhoneShadow: e.target.checked, scannerLighting: true })}
-                className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 w-3 h-3 cursor-pointer accent-indigo-600"
-              />
-              <span>📱 Smartphone Cast Shadow</span>
-            </label>
-          </div>
+        {/* Levers for Mobile Shadow and 3D Page Shadow */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Mobile Phone Shadow Lever */}
+          {(() => {
+            const phoneShadowVal = style.cameraPhoneShadowIntensity ?? (style.cameraPhoneShadow ? 60 : 0);
+            return (
+              <div className="space-y-1.5 bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium flex items-center gap-1">
+                    <span>📱 Mobile Phone Shadow</span>
+                  </span>
+                  <span className="font-mono text-amber-400 font-bold text-[10px] bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                    {phoneShadowVal > 0 ? `${phoneShadowVal}%` : 'Off'}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={phoneShadowVal}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    onChange({
+                      cameraPhoneShadowIntensity: val,
+                      cameraPhoneShadow: val > 0,
+                      scannerLighting: val > 0 ? true : style.scannerLighting,
+                    });
+                  }}
+                  className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  title="Adjust smartphone & hand silhouette shadow opacity"
+                />
+                <div className="flex justify-between text-[9.5px] text-slate-500">
+                  <span>None (0%)</span>
+                  <span>Soft (40%)</span>
+                  <span>Deep (100%)</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 3D Page Shadow Lever & Presets */}
+          {(() => {
+            const pageShadowVal = style.pageShadowIntensity ?? (
+              style.cameraDeskShadow === 'none'
+                ? 0
+                : style.cameraDeskShadow === 'subtle'
+                ? 25
+                : style.cameraDeskShadow === 'deep'
+                ? 90
+                : 55
+            );
+            return (
+              <div className="space-y-1.5 bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium flex items-center gap-1">
+                    <Box className="w-3 h-3 text-indigo-400" />
+                    <span>3D Page Shadow</span>
+                  </span>
+                  <span className="font-mono text-indigo-300 font-bold text-[10px] bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20">
+                    {pageShadowVal > 0 ? `${pageShadowVal}%` : 'Flat (0%)'}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={pageShadowVal}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    onChange({
+                      pageShadowIntensity: val,
+                      cameraDeskShadow: val === 0 ? 'none' : val < 40 ? 'subtle' : val > 75 ? 'deep' : 'floating',
+                    });
+                  }}
+                  className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  title="Adjust 3D paper elevation drop shadow depth"
+                />
+                {/* Quick Presets */}
+                <div className="grid grid-cols-4 gap-1 text-[9.5px]">
+                  {[
+                    { label: 'Flat', val: 0, depth: 'none' },
+                    { label: 'Subtle', val: 25, depth: 'subtle' },
+                    { label: 'Floating', val: 55, depth: 'floating' },
+                    { label: 'Deep 3D', val: 90, depth: 'deep' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() =>
+                        onChange({
+                          pageShadowIntensity: preset.val,
+                          cameraDeskShadow: preset.depth as PageShadowDepth,
+                        })
+                      }
+                      className={`py-0.5 px-1 rounded transition text-center ${
+                        pageShadowVal === preset.val
+                          ? 'bg-indigo-600 text-white font-bold'
+                          : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
